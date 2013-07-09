@@ -5,11 +5,12 @@ import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.*;
+import org.apache.lucene.util.Version;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -17,9 +18,12 @@ import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.DocIterator;
+import org.apache.solr.search.DocList;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.search.grouping.distributed.command.QueryCommand;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -62,24 +66,29 @@ public class LireRequestHandler extends RequestHandlerBase {
         if (params.getInt("rows")!=null)
             maximumHits = params.getInt("rows");
         // create boolean query:
-//        System.out.println("** Creating query.");
+        System.out.println("** Creating query.");
+        // TODO: This does not work as intended! Problems ahead!
+//        QueryParser qp = new QueryParser(Version.LUCENE_43, field, new WhitespaceAnalyzer(Version.LUCENE_43));
         BooleanQuery query = new BooleanQuery();
         for (int i = 0; i < hashes.length; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
             hashes[i] = hashes[i].trim();
-            if (hashes[i].length() > 0)
-                query.add(new BooleanClause(new TermQuery(new Term(field, hashes[i] + "")), BooleanClause.Occur.SHOULD));
+            if (hashes[i].length() > 0) {
+                query.add(new BooleanClause(new TermQuery(new Term(field, hashes[i].trim())), BooleanClause.Occur.SHOULD));
+                System.out.println("** " + field + ": " + hashes[i].trim() );
+            }
         }
-//        System.out.println("** Doing search.");
+        System.out.println("** Doing search.");
         // get results:
-        DocSet docSet = searcher.getDocSet(query);
-        DocIterator iterator = docSet.iterator();
+
+        TopDocs docs = searcher.search(query, 500);
         // temp feature
         LireFeature f = (LireFeature) fieldToClass.get(field).newInstance();
         // query feature
         LireFeature q = (LireFeature) fieldToClass.get(field).newInstance();
         q.setByteArrayRepresentation(featureVector);
-//        System.out.println("** Doing re-rank.");
+        System.out.println("** Query feature: " + q.getClass().getName() + ": " + Arrays.toString(q.getDoubleHistogram()));
+        System.out.println("** Doing re-rank.");
         // re-rank
         TreeSet<SimpleResult> resultScoreDocs = new TreeSet<SimpleResult>();
         float maxDistance = -1f;
@@ -87,13 +96,12 @@ public class LireRequestHandler extends RequestHandlerBase {
 
         int count = 0;
         String name = field.replace("_ha", "_hi");
-//        System.out.println("** Iterating docs.");
-        while (count++ < 500 && iterator.hasNext()) {
-//            System.out.println("** " + count);
-            int i = iterator.nextDoc();
-//            System.out.println("** Getting document " + i);
-            Document d = searcher.doc(i);
-//            System.out.println("** Getting data from field " + name);
+        System.out.println("** Iterating docs.");
+        for (int i = 0; i < docs.scoreDocs.length; i++) {
+            System.out.println("** " + count);
+            System.out.println("** Getting document " + docs.scoreDocs[i].doc + " with score " + docs.scoreDocs[i].score);
+            Document d = searcher.doc(docs.scoreDocs[i].doc);
+            System.out.println("** Getting data from field " + name);
             f.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValues(name).length);
             tmpScore = q.getDistance(f);
             assert (tmpScore >= 0);
