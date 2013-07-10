@@ -1,0 +1,1 @@
+curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary @add.xml
