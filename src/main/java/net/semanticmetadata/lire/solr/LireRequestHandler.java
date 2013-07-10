@@ -23,10 +23,7 @@ import org.apache.solr.search.DocSet;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.grouping.distributed.command.QueryCommand;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
@@ -120,13 +117,15 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
 //        System.out.println("** Creating response.");
         // todo: create response:
+        LinkedList list = new LinkedList();
         for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
             SimpleResult result = it.next();
             HashMap m = new HashMap(2);
             m.put("d", result.getDistance());
             m.put("id", result.getDocument().get("title"));
-            rsp.add("r", m);
+            list.add(m);
         }
+        rsp.add("docs", list);
         // rsp.add("Test-name", "Test-val");
     }
 
