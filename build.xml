@@ -90,8 +90,7 @@
         <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}"/>
     </target>
 
-    <!--target name="copy_jar_to_liredemo" depends="dist">
-        <copy file="dist/lire.jar" todir="./samples/liredemo/lib"/>
-        <copy file="dist/lire.jar" todir="./samples/simpleapplication/lib"/>
-    </target-->
+    <target name="copy_jar_to_jetty" depends="dist">
+        <copy file="dist/lire-request-handler.jar" todir="../../Apps/example/solr-webapp/webapp/WEB-INF/lib"/>
+    </target>
 </project>

@@ -8,11 +8,11 @@ import org.apache.commons.codec.binary.Base64;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.URL;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class AddImages {
 
     public static void main(String[] args) throws IOException {
         BitSampling.readHashFunctions();
-        List<File> files = FileUtils.getAllImageFiles(new File("I:\\WIPO\\CA\\converted-0"), true).subList(0,1000);
+        List<File> files = FileUtils.getAllImageFiles(new File("I:\\WIPO\\CA\\converted-3"), true).subList(0,2500);
         /*
 //        ArrayList<File> files = FileUtils.getAllImageFiles(new File("..\\Lire\\testdata\\wang-1000"), true);
         for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
@@ -65,7 +65,7 @@ public class AddImages {
         }
         */
         int count = 0;
-        BufferedWriter br = new BufferedWriter(new FileWriter("add.xml", false));
+        BufferedWriter br = new BufferedWriter(new FileWriter("add3.xml", false));
         br.write("<add>\n");
         for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
             File file = iterator.next();

@@ -1,6 +1,5 @@
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.DocumentBuilder;
 import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.tools.Extractor;
@@ -31,11 +30,11 @@ public class AddImagesFromDataFile {
     }
     
     public static void main(String[] args) throws IOException, IllegalAccessException, ClassNotFoundException, InstantiationException {
-        BitSampling.setNumFunctionBundles(80);
+//        BitSampling.setNumFunctionBundles(80);
 //        BitSampling.generateHashFunctions("BitSampling.obj");
-        BitSampling.readHashFunctions(new FileInputStream("BitSampling.obj"));
+        BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("d:\\temp\\"), new File("D:\\DataSets\\wipo_v2.out"));
+        a.createXml(new File("I:/WIPO/CA/"), new File("I:/WIPO/CA/wipo.data"));
     }
 
 
@@ -55,14 +54,14 @@ public class AddImagesFromDataFile {
             in.read(temp, 0, tmp);
             String filename = new String(temp, 0, tmp);
             // normalize Filename to full path.
-            filename = inputFile.getCanonicalPath().substring(0, inputFile.getCanonicalPath().lastIndexOf(inputFile.getName())) + filename;
+            File file = new File(filename);
             out.write("\t<doc>\n");
             // id and file name ...
             out.write("\t\t<field name=\"id\">");
-            out.write(filename);
+            out.write(file.getCanonicalPath().replace("I:\\WIPO\\", "").replace('\\', '/'));
             out.write("</field>\n");
             out.write("\t\t<field name=\"title\">");
-            out.write(filename);
+            out.write(file.getName());
             out.write("</field>\n");
 //            System.out.print(filename);
             while ((tmpFeature = in.read()) < 255) {
