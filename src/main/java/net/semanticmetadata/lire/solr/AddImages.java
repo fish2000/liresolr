@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
@@ -46,7 +47,7 @@ public class AddImages {
 
     public static void main(String[] args) throws IOException {
         BitSampling.readHashFunctions();
-        ArrayList<File> files = FileUtils.getAllImageFiles(new File("D:\\DataSets\\WIPO\\CA\\converted-4"), true);
+        List<File> files = FileUtils.getAllImageFiles(new File("I:\\WIPO\\CA\\converted-0"), true).subList(0,1000);
         /*
 //        ArrayList<File> files = FileUtils.getAllImageFiles(new File("..\\Lire\\testdata\\wang-1000"), true);
         for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
@@ -96,6 +97,7 @@ public class AddImages {
         getFields(img, result, new EdgeHistogram(), "eh_hi", "eh_ha");
         getFields(img, result, new JCD(), "jc_hi", "jc_ha");
         getFields(img, result, new PHOG(), "ph_hi", "ph_ha");
+        getFields(img, result, new OpponentHistogram(), "oh_hi", "oh_ha");
         // close doc ...
         result.append("\t</doc>\n");
 //        result.append("</add>");

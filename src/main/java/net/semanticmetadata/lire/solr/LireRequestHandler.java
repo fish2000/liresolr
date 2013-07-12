@@ -1,28 +1,23 @@
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.DocumentBuilder;
 import net.semanticmetadata.lire.imageanalysis.*;
-import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
-import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
-import org.apache.solr.search.DocIterator;
-import org.apache.solr.search.DocList;
-import org.apache.solr.search.DocSet;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.search.grouping.distributed.command.QueryCommand;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -48,14 +43,59 @@ public class LireRequestHandler extends RequestHandlerBase {
         super.init(args);
     }
 
+    /**
+     * Handles three types of requests.
+     * <ol>
+     *     <li>search by already extracted images.</li>
+     *     <li>search by an image URL.</li>
+     *     <li>Random results.</li>
+     * </ol>
+     * @param req
+     * @param rsp
+     * @throws Exception
+     */
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
+        // (1) check if the necessary parameters are here
+        if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
+            handleHashSearch(req, rsp);
+        } else if (req.getParams().get("url") != null) { // we are searching for an image based on an URL
+            handleUrlSearch(req, rsp);
+        } else { // lets return random results.
+            handleRandomSearch(req, rsp);
+        }
+    }
+
+    private void handleRandomSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException {
+        SolrIndexSearcher searcher = req.getSearcher();
+        DirectoryReader indexReader = searcher.getIndexReader();
+        double maxDoc = indexReader.maxDoc();
+        int rows = 100;
+        if (req.getParams().getInt("rows")!=null)
+            rows = req.getParams().getInt("rows");
+        LinkedList list = new LinkedList();
+        while (list.size() < rows) {
+            HashMap m = new HashMap(2);
+            Document d = indexReader.document((int) Math.floor(Math.random()*maxDoc));
+            m.put("id", d.getValues("id"));
+            m.put("title", d.getValues("title"));
+            list.add(m);
+        }
+        rsp.add("docs", list);
+    }
+
+    private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) {
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
+    private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException {
         SolrParams params = req.getParams();
         SolrIndexSearcher searcher = req.getSearcher();
         // get the params needed:
         // hashes=x y z ...
         // feature=<base64>
         // field=<cl_ha|ph_ha|...>
+
         String[] hashes = params.get("hashes").trim().split(" ");
         byte[] featureVector = Base64.decodeBase64(params.get("feature"));
         String field = params.get("field");
@@ -64,8 +104,6 @@ public class LireRequestHandler extends RequestHandlerBase {
             maximumHits = params.getInt("rows");
         // create boolean query:
         System.out.println("** Creating query.");
-        // TODO: This does not work as intended! Problems ahead!
-//        QueryParser qp = new QueryParser(Version.LUCENE_43, field, new WhitespaceAnalyzer(Version.LUCENE_43));
         BooleanQuery query = new BooleanQuery();
         for (int i = 0; i < hashes.length; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
