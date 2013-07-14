@@ -96,13 +96,15 @@ public class LireRequestHandler extends RequestHandlerBase {
         SolrIndexSearcher searcher = req.getSearcher();
         TopDocs hits = searcher.search(new TermQuery(new Term("id", req.getParams().get("id"))), 1);
         String paramField = "cl_ha";
-        if (req.getParams().get("field") != null) paramField = req.getParams().get("field");
+        if (req.getParams().get("field") != null)
+            paramField = req.getParams().get("field");
         LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
         if (hits.scoreDocs.length > 0) {
             Document d = searcher.doc(hits.scoreDocs[0].doc);
             String[] hashes = d.getValues(paramField)[0].split(" ");
             String histogramFieldName = paramField.replace("_ha", "_hi");
-            queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes, d.getBinaryValue(histogramFieldName).offset, d.getBinaryValues(histogramFieldName).length);
+            queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
+                    d.getBinaryValue(histogramFieldName).offset, d.getBinaryValues(histogramFieldName).length);
             int rows = 60;
             if (req.getParams().getInt("rows") != null)
                 rows = req.getParams().getInt("rows");
@@ -255,7 +257,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getDescription() {
-        return "LIRE Request Handler to add images to an index and search them";
+        return "LIRE Request Handler to add images to an index and search them. Search images by id, by url and by extracted features.";
     }
 
     @Override
