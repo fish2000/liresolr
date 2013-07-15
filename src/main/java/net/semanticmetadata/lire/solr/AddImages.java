@@ -14,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -45,42 +46,42 @@ import java.util.List;
 public class AddImages {
     static String baseURL = "http://localhost:9000/solr/lire";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         BitSampling.readHashFunctions();
-        List<File> files = FileUtils.getAllImageFiles(new File("I:\\WIPO\\CA\\converted-3"), true).subList(0,2500);
-        /*
-//        ArrayList<File> files = FileUtils.getAllImageFiles(new File("..\\Lire\\testdata\\wang-1000"), true);
-        for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
-            File file = iterator.next();
-            // System.out.println(createAddDoc(file).toString());
-            URL u = new URL(baseURL + "/update?stream.body=" +
-                    URLEncoder.encode(createAddDoc(file).toString(), "utf-8"));
-            InputStream in = u.openStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
-            System.out.println("******");
+        LinkedList<Thread> threads = new LinkedList<Thread>();
+        for (int j = 0; j<18; j++) {
+            final int tz = j;
+            Thread t = new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        List<File> files = FileUtils.getAllImageFiles(new File("E:\\WIPO-conv\\converted-"+tz), true);
+                        int count = 0;
+                        BufferedWriter br = new BufferedWriter(new FileWriter("add-"+tz+".xml", false));
+                        br.write("<add>\n");
+                        for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
+                            File file = iterator.next();
+                            br.write(createAddDoc(file).toString());
+                            count++;
+//                            if (count % 1000 == 0) System.out.print('.');
+                        }
+                        br.write("</add>\n");
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                }
+            };
+            t.start();
+            threads.add(t);
         }
-        */
-        int count = 0;
-        BufferedWriter br = new BufferedWriter(new FileWriter("add3.xml", false));
-        br.write("<add>\n");
-        for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
-            File file = iterator.next();
-            br.write(createAddDoc(file).toString());
-            count++;
-            if (count % 10 == 0) System.out.print('.');
-            if (count % (40*10) == 0) System.out.println(" " + count);
+        for (Iterator<Thread> iterator = threads.iterator(); iterator.hasNext(); ) {
+            Thread next = iterator.next();
+            next.join();
         }
-        br.write("</add>\n");
-        br.close();
-        System.out.println(baseURL + "/update?stream.body=" + URLEncoder.encode("<commit/>", "utf-8"));
-//        System.out.println("http://localhost:8080/solr/lire/update?stream.body=" + URLEncoder.encode("<commit/>", "utf-8"));
     }
 
-    static StringBuilder createAddDoc(File image) throws IOException {
+    private static StringBuilder createAddDoc(File image) throws IOException {
         BufferedImage img = ImageIO.read(image);
         StringBuilder result = new StringBuilder(200);
 //        result.append("<add>\n");
