@@ -22,10 +22,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
@@ -99,12 +96,15 @@ public class LireRequestHandler extends RequestHandlerBase {
         if (req.getParams().get("field") != null)
             paramField = req.getParams().get("field");
         LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
+        rsp.add("QueryField", paramField);
+        rsp.add("QueryFeature", queryFeature.getClass().getName());
+
         if (hits.scoreDocs.length > 0) {
-            Document d = searcher.doc(hits.scoreDocs[0].doc);
-            String[] hashes = d.getValues(paramField)[0].split(" ");
+            Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
+            String[] hashes = d.getValues(paramField)[0].trim().split(" ");
             String histogramFieldName = paramField.replace("_ha", "_hi");
             queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
-                    d.getBinaryValue(histogramFieldName).offset, d.getBinaryValues(histogramFieldName).length);
+                    d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
             int rows = 60;
             if (req.getParams().getInt("rows") != null)
                 rows = req.getParams().getInt("rows");
@@ -114,7 +114,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 hashes[i] = hashes[i].trim();
                 if (hashes[i].length() > 0) {
                     query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i].trim())), BooleanClause.Occur.SHOULD));
-//                System.out.println("** " + field + ": " + hashes[i].trim());
+//                System.out.println("** " + paramField + ": " + hashes[i].trim());
                 }
             }
             doSearch(rsp, searcher, paramField, rows, query, queryFeature);
@@ -206,7 +206,8 @@ public class LireRequestHandler extends RequestHandlerBase {
     private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
-        TopDocs docs = searcher.search(query, 3000);
+        TopDocs docs = searcher.search(query, 2000);
+        rsp.add("RawDocsCount", docs.scoreDocs.length+"");
 //        System.out.println("** Query feature: " + queryFeature.getClass().getName() + ": " + Arrays.toString(queryFeature.getDoubleHistogram()));
 //        System.out.println("** Doing re-rank.");
         // re-rank
@@ -214,29 +215,31 @@ public class LireRequestHandler extends RequestHandlerBase {
         float maxDistance = -1f;
         float tmpScore;
 
-        int count = 0;
         String name = field.replace("_ha", "_hi");
+        Document d;
 //        System.out.println("** Iterating docs.");
         for (int i = 0; i < docs.scoreDocs.length; i++) {
 //            System.out.println("** " + count);
 //            System.out.println("** Getting document " + docs.scoreDocs[i].doc + " with score " + docs.scoreDocs[i].score);
-            Document d = searcher.doc(docs.scoreDocs[i].doc);
+            d = searcher.doc(docs.scoreDocs[i].doc);
 //            System.out.println("** Getting data from field " + name);
-//            System.out.println(d.getValues(name)[0]);
 //            tmpFeature.setByteArrayRepresentation(Base64.decodeBase64(d.getValues(name)[0]));
-            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValues(name).length);
+//            System.out.println("** id: " + d.getValues("id")[0]);
+//            System.out.println("** Base64: " + org.apache.solr.common.util.Base64.byteArrayToBase64(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length));
+//            System.out.println("** Feature: " + tmpFeature.getClass().getName());
+            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
             tmpScore = queryFeature.getDistance(tmpFeature);
-            assert (tmpScore >= 0);
+//            System.out.println("** Score: " + tmpScore + " - max Score: " + maxDistance);
             if (resultScoreDocs.size() < maximumHits) {
-                resultScoreDocs.add(new SimpleResult(tmpScore, d, count));
-                maxDistance = Math.max(maxDistance, tmpScore);
+                resultScoreDocs.add(new SimpleResult(tmpScore, d, docs.scoreDocs[i].doc));
+                maxDistance = resultScoreDocs.last().getDistance();
             } else if (tmpScore < maxDistance) {
-                // if it is nearer to the sample than at least one of the current set:
-                // remove the last one ...
+//                if it is nearer to the sample than at least one of the current set:
+//                remove the last one ...
                 resultScoreDocs.remove(resultScoreDocs.last());
-                // add the new one ...
-                resultScoreDocs.add(new SimpleResult(tmpScore, d, count));
-                // and set our new distance border ...
+//                add the new one ...
+                resultScoreDocs.add(new SimpleResult(tmpScore, d, docs.scoreDocs[i].doc));
+//                and set our new distance border ...
                 maxDistance = resultScoreDocs.last().getDistance();
             }
         }
@@ -249,6 +252,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             m.put("d", result.getDistance());
             m.put("id", result.getDocument().get("id"));
             m.put("title", result.getDocument().get("title"));
+//            m.put(field, result.getDocument().get(field));
+//            m.put(field.replace("_ha", "_hi"), result.getDocument().getBinaryValue(field));
             list.add(m);
         }
         rsp.add("docs", list);

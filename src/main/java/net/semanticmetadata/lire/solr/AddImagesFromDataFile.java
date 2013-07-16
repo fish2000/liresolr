@@ -7,6 +7,7 @@ import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -34,7 +35,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("I:/WIPO/CA/"), new File("I:/WIPO/CA/wipo.data"));
+        a.createXml(new File("D:/Temp/"), new File("D:\\DataSets\\wipo_v3.out"));
     }
 
 
@@ -50,7 +51,7 @@ public class AddImagesFromDataFile {
         out.write("<add>\n");
         while (in.read(tempInt, 0, 4) > 0) {
             tmp = SerializationUtils.toInt(tempInt);
-            // read file hashFunctionsFileName:
+            // read file name:
             in.read(temp, 0, tmp);
             String filename = new String(temp, 0, tmp);
             // normalize Filename to full path.
@@ -58,7 +59,7 @@ public class AddImagesFromDataFile {
             out.write("\t<doc>\n");
             // id and file name ...
             out.write("\t\t<field name=\"id\">");
-            out.write(file.getCanonicalPath().replace("I:\\WIPO\\", "").replace('\\', '/'));
+            out.write(file.getCanonicalPath().replace("D:\\DataSets\\WIPO-", "").replace('\\', '/'));
             out.write("</field>\n");
             out.write("\t\t<field name=\"title\">");
             out.write(file.getName());
@@ -71,7 +72,8 @@ public class AddImagesFromDataFile {
                 in.read(tempInt, 0, 4);
                 tmp = SerializationUtils.toInt(tempInt);
                 // read feature byte[]
-                in.read(temp, 0, tmp);
+                int read = in.read(temp, 0, tmp);
+                if (read!=tmp) System.err.println("!!!");
                 f.setByteArrayRepresentation(temp, 0, tmp);
                 addToDocument(f, out);
 //                d.add(new StoredField(Extractor.featureFieldNames[tmpFeature], f.getByteArrayRepresentation()));
@@ -107,6 +109,8 @@ public class AddImagesFromDataFile {
         out.write("\t\t<field name=\"" + hashesField + "\">");
         out.write(SerializationUtils.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
         out.write("</field>\n");
+
+//        if (classToPrefix.get(feature.getClass()).equals("eh")) System.out.println(classToPrefix.get(feature.getClass()) + " " + Base64.encodeBase64String(feature.getByteArrayRepresentation()));
         
     }
 }
