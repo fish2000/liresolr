@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>LIRE - Lucene Image Retrieval</title>
+    <link href="style.css" rel="stylesheet" type="text/css"/>
+	<script src="js/jquery-l.js"></script>
+</head>
+
+<body>
+<div class="main">
+    <div style="width:100%; text-align:right"><img src="img/logo.png"/></div>
+    <h1>LIRE Web Demo</h1>
+
+    <p>This page is a simple demonstrator for the LIRE image search library. The images below show the query image and
+        the results. Use the images to trigger a new content based search request. </p>
+	<script>
+$( document ).ready(function() {
+	// get JSON-formatted data from the server
+	$.getJSON( "/solr/lire/lireq", function( myResult ) {
+		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
+		console.log(myResult);
+	    
+		var last = $("#results");
+		for (var i =0; i< myResult.docs.length; i++) {
+			myID = myResult.docs[i].id.toString();
+			imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
+			imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
+			imageUrl = imageUrl.replace(".png", ".jpg");
+			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\""+imageUrl+"\" />"
+				+ "<div align=\"center\" class=\"searchLink\">"
+				// + "d="+myResult.docs[i].d+"<br/>"
+				+ "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a>"
+				+ "</div></div>" );
+			recent.insertAfter(last);
+			last=recent;
+		}
+		
+	});
+	
+});
+function search(idString, field) {
+	// console.log(idString);
+	// clear the old data
+	$('.imgCont').remove();
+	$("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
+	// get all the new data from the server ...
+	serverUrl = "/solr/lire/lireq?rows=30&id="+idString+"&field="+field;
+	console.log(serverUrl);
+	$.getJSON( serverUrl, function( myResult ) {
+		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
+		console.log(myResult);
+		
+		var last = $("#results");
+		for (var i =0; i< myResult.docs.length; i++) {
+			myID = myResult.docs[i].id.toString();
+			imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
+			imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
+			imageUrl = imageUrl.replace(".png", ".jpg");
+			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\""+imageUrl+"\" />"
+				+ "<div class=\"searchLink\">"
+				 + "d="+myResult.docs[i].d+"<br/>"
+				+ "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
+				+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a>"
+				+ "</div></div>" );
+			recent.insertAfter(last);
+			last=recent;
+		}
+	
+	});
+}
+	</script>
+    <h1 id="results">Results</h1>
+
+    <br style="clear:both;"/>
+
+<p><i id="perf">Index search time</i></p>
+</div>
+</body>
+</html>
