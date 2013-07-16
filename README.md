@@ -5,20 +5,20 @@ Includes a RequestHandler and some utility classes for a fast start.
 
 The request handler supports four different types of queries
 
-1. Get random images ...
-2. Get images that are looking like the one with id ...
-3. Get images looking like the one found at url ...
-4. Get images with a feature vector like ...
+1.  Get random images ...
+2.  Get images that are looking like the one with id ...
+3.  Get images looking like the one found at url ...
+4.  Get images with a feature vector like ...
 
 Preliminaries
 -------------
 Supported values for feature field parameters, e.g. lireq?field=cl_ha:
 
-- **cl_ha** .. ColorLayout
-- **ph_ha** .. PHOG
-- **oh_ha** .. OpponentHistogram
-- **eh_ha** .. EdgeHistogram
-- **jc_ha** .. JCD
+-  **cl_ha** .. ColorLayout
+-  **ph_ha** .. PHOG
+-  **oh_ha** .. OpponentHistogram
+-  **eh_ha** .. EdgeHistogram
+-  **jc_ha** .. JCD
 
 Getting random images
 ---------------------
@@ -61,4 +61,4 @@ Parameters:
 -  **rows** .. indicates how many results should be returned (optional, default=60).
 
 
-Mathias Lux, 2013-07-12
+*Mathias Lux, 2013-07-12*
