@@ -22,7 +22,10 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.TreeSet;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
@@ -33,6 +36,7 @@ import java.util.*;
 public class LireRequestHandler extends RequestHandlerBase {
     private int countRequests = 0;
     private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
+    private int defaultNumberOfResults = 60;
 
     static {
         fieldToClass.put("cl_ha", ColorLayout.class);
@@ -105,9 +109,9 @@ public class LireRequestHandler extends RequestHandlerBase {
             String histogramFieldName = paramField.replace("_ha", "_hi");
             queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
                     d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
-            int rows = 60;
+            int paramRows = defaultNumberOfResults;
             if (req.getParams().getInt("rows") != null)
-                rows = req.getParams().getInt("rows");
+                paramRows = req.getParams().getInt("rows");
             BooleanQuery query = new BooleanQuery();
             for (int i = 0; i < hashes.length; i++) {
                 // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
@@ -117,7 +121,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 //                System.out.println("** " + paramField + ": " + hashes[i].trim());
                 }
             }
-            doSearch(rsp, searcher, paramField, rows, query, queryFeature);
+            doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
         }
     }
 
@@ -125,11 +129,11 @@ public class LireRequestHandler extends RequestHandlerBase {
         SolrIndexSearcher searcher = req.getSearcher();
         DirectoryReader indexReader = searcher.getIndexReader();
         double maxDoc = indexReader.maxDoc();
-        int rows = 60;
+        int paramRows = defaultNumberOfResults;
         if (req.getParams().getInt("rows") != null)
-            rows = req.getParams().getInt("rows");
+            paramRows = req.getParams().getInt("rows");
         LinkedList list = new LinkedList();
-        while (list.size() < rows) {
+        while (list.size() < paramRows) {
             HashMap m = new HashMap(2);
             Document d = indexReader.document((int) Math.floor(Math.random() * maxDoc));
             m.put("id", d.getValues("id"));
@@ -142,8 +146,10 @@ public class LireRequestHandler extends RequestHandlerBase {
     private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrParams params = req.getParams();
         String paramUrl = params.get("url");
-        String paramField = params.get("field");
-        int paramRows = 60;
+        String paramField = "cl_ha";
+        if (req.getParams().get("field") != null)
+            paramField = req.getParams().get("field");
+        int paramRows = defaultNumberOfResults;
         if (params.get("rows") != null)
             paramRows = params.getInt("rows");
         BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
@@ -178,10 +184,12 @@ public class LireRequestHandler extends RequestHandlerBase {
 
         String[] hashes = params.get("hashes").trim().split(" ");
         byte[] featureVector = Base64.decodeBase64(params.get("feature"));
-        String field = params.get("field");
-        int maximumHits = 20;
+        String paramField = "cl_ha";
+        if (req.getParams().get("field") != null)
+            paramField = req.getParams().get("field");
+        int paramRows = defaultNumberOfResults;
         if (params.getInt("rows") != null)
-            maximumHits = params.getInt("rows");
+            paramRows = params.getInt("rows");
         // create boolean query:
 //        System.out.println("** Creating query.");
         BooleanQuery query = new BooleanQuery();
@@ -189,18 +197,18 @@ public class LireRequestHandler extends RequestHandlerBase {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
             hashes[i] = hashes[i].trim();
             if (hashes[i].length() > 0) {
-                query.add(new BooleanClause(new TermQuery(new Term(field, hashes[i].trim())), BooleanClause.Occur.SHOULD));
+                query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i].trim())), BooleanClause.Occur.SHOULD));
 //                System.out.println("** " + field + ": " + hashes[i].trim());
             }
         }
 //        System.out.println("** Doing search.");
 
         // query feature
-        LireFeature queryFeature = (LireFeature) fieldToClass.get(field).newInstance();
+        LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
         queryFeature.setByteArrayRepresentation(featureVector);
 
         // get results:
-        doSearch(rsp, searcher, field, maximumHits, query, queryFeature);
+        doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
     }
 
     private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {

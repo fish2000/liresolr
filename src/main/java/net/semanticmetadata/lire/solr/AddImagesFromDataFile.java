@@ -7,7 +7,6 @@ import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -35,7 +34,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("D:/Temp/"), new File("D:\\DataSets\\wipo_v3.out"));
+        a.createXml(new File("I:\\WIPO\\CA"), new File("I:\\WIPO\\CA\\wipo.data"));
     }
 
 
@@ -59,7 +58,7 @@ public class AddImagesFromDataFile {
             out.write("\t<doc>\n");
             // id and file name ...
             out.write("\t\t<field name=\"id\">");
-            out.write(file.getCanonicalPath().replace("D:\\DataSets\\WIPO-", "").replace('\\', '/'));
+            out.write(file.getCanonicalPath().replace("I:\\WIPO\\-", "").replace('\\', '/'));
             out.write("</field>\n");
             out.write("\t\t<field name=\"title\">");
             out.write(file.getName());
