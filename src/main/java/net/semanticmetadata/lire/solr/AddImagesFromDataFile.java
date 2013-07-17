@@ -6,6 +6,7 @@ import net.semanticmetadata.lire.indexing.tools.Extractor;
 import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 
+import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
@@ -34,7 +35,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("I:\\WIPO\\CA"), new File("I:\\WIPO\\CA\\wipo.data"));
+        a.createXml(new File("D:/Temp"), new File("test.data"));
     }
 
 
@@ -43,7 +44,7 @@ public class AddImagesFromDataFile {
         byte[] tempInt = new byte[4];
         int tmp, tmpFeature;
         int count = 0;
-        byte[] temp = new byte[100 * 1024];
+        byte[] temp = new byte[10 * 1024 * 1024];
         // read file hashFunctionsFileName length:
         FileWriter out = new FileWriter(outDirectory.getPath() + "/data_001.xml", false);
         int fileCount = 1;
@@ -58,7 +59,7 @@ public class AddImagesFromDataFile {
             out.write("\t<doc>\n");
             // id and file name ...
             out.write("\t\t<field name=\"id\">");
-            out.write(file.getCanonicalPath().replace("I:\\WIPO\\-", "").replace('\\', '/'));
+            out.write(file.getCanonicalPath().replace("D:\\DataSets\\WIPO-", "").replace('\\', '/'));
             out.write("</field>\n");
             out.write("\t\t<field name=\"title\">");
             out.write(file.getName());
@@ -74,7 +75,7 @@ public class AddImagesFromDataFile {
                 int read = in.read(temp, 0, tmp);
                 if (read!=tmp) System.err.println("!!!");
                 f.setByteArrayRepresentation(temp, 0, tmp);
-                addToDocument(f, out);
+                addToDocument(f, out, file);
 //                d.add(new StoredField(Extractor.featureFieldNames[tmpFeature], f.getByteArrayRepresentation()));
             }
             out.write("\t</doc>\n");
@@ -98,7 +99,16 @@ public class AddImagesFromDataFile {
         in.close();
     }
 
-    private void addToDocument(LireFeature feature, Writer out) throws IOException {
+    private void addToDocument(LireFeature feature, Writer out, File file) throws IOException {
+        try {
+            LireFeature f1 = feature.getClass().newInstance();
+            f1.extract(ImageIO.read(file));
+            float distance = f1.getDistance(feature);
+            if (distance !=0) System.err.println("Problem with " + f1.getClass().getName() + " at file " + file.getPath() + ", distance="+distance);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
         String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
         String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
 

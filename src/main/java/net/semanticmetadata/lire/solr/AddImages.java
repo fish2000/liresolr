@@ -49,15 +49,15 @@ public class AddImages {
     public static void main(String[] args) throws IOException, InterruptedException {
         BitSampling.readHashFunctions();
         LinkedList<Thread> threads = new LinkedList<Thread>();
-        for (int j = 0; j<18; j++) {
+        for (int j = 10; j<21; j++) {
             final int tz = j;
             Thread t = new Thread(){
                 @Override
                 public void run() {
                     try {
-                        List<File> files = FileUtils.getAllImageFiles(new File("E:\\WIPO-conv\\converted-"+tz), true);
+                        List<File> files = FileUtils.getAllImageFiles(new File("D:\\DataSets\\WIPO-US\\jpg_us_trim\\"+tz), true);
                         int count = 0;
-                        BufferedWriter br = new BufferedWriter(new FileWriter("add-"+tz+".xml", false));
+                        BufferedWriter br = new BufferedWriter(new FileWriter("add-us-"+tz+".xml", false));
                         br.write("<add>\n");
                         for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
                             File file = iterator.next();
