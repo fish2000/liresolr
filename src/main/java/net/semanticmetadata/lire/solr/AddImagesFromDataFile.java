@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import javax.imageio.ImageIO;
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 
@@ -29,18 +30,18 @@ public class AddImagesFromDataFile {
         classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(JCD.class, "jc");
     }
-    
+
     public static void main(String[] args) throws IOException, IllegalAccessException, ClassNotFoundException, InstantiationException {
 //        BitSampling.setNumFunctionBundles(80);
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("D:/Temp"), new File("test.data"));
+        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v7.out"));
     }
 
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-        BufferedInputStream in = new BufferedInputStream(new GZIPInputStream(new FileInputStream(inputFile)));
+        InputStream in = new FileInputStream(inputFile);
         byte[] tempInt = new byte[4];
         int tmp, tmpFeature;
         int count = 0;
@@ -49,7 +50,7 @@ public class AddImagesFromDataFile {
         FileWriter out = new FileWriter(outDirectory.getPath() + "/data_001.xml", false);
         int fileCount = 1;
         out.write("<add>\n");
-        while (in.read(tempInt, 0, 4) > 0) {
+        while ((tmp = in.read(tempInt, 0, 4)) > 0) {
             tmp = SerializationUtils.toInt(tempInt);
             // read file name:
             in.read(temp, 0, tmp);
@@ -73,7 +74,7 @@ public class AddImagesFromDataFile {
                 tmp = SerializationUtils.toInt(tempInt);
                 // read feature byte[]
                 int read = in.read(temp, 0, tmp);
-                if (read!=tmp) System.err.println("!!!");
+                if (read != tmp) System.err.println("!!!");
                 f.setByteArrayRepresentation(temp, 0, tmp);
                 addToDocument(f, out, file);
 //                d.add(new StoredField(Extractor.featureFieldNames[tmpFeature], f.getByteArrayRepresentation()));
@@ -85,11 +86,11 @@ public class AddImagesFromDataFile {
                 out.write("</add>\n");
                 out.close();
                 fileCount++;
-                out = new FileWriter(outDirectory.getPath() + "/data_0"+((fileCount<10)?"0"+fileCount:fileCount)+".xml", false);
+                out = new FileWriter(outDirectory.getPath() + "/data_0" + ((fileCount < 10) ? "0" + fileCount : fileCount) + ".xml", false);
                 out.write("<add>\n");
             }
             if (verbose) {
-                if (count %  1000 == 0) System.out.print('.');
+                if (count % 1000 == 0) System.out.print('.');
                 if (count % 10000 == 0) System.out.println(" " + count);
             }
         }
@@ -104,11 +105,17 @@ public class AddImagesFromDataFile {
             LireFeature f1 = feature.getClass().newInstance();
             f1.extract(ImageIO.read(file));
             float distance = f1.getDistance(feature);
-            if (distance !=0) System.err.println("Problem with " + f1.getClass().getName() + " at file " + file.getPath() + ", distance="+distance);
+            if (distance != 0) {
+                System.out.println("D: " + Arrays.toString(feature.getDoubleHistogram()) + "\n" +
+                        "E: " + Arrays.toString(f1.getDoubleHistogram()) + "\n" +
+                        "Problem with " + f1.getClass().getName() + " at file " + file.getPath() + ", distance=" + distance
+                );
+            }
         } catch (Exception e) {
             e.printStackTrace();
 
         }
+
         String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
         String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
 
@@ -120,6 +127,6 @@ public class AddImagesFromDataFile {
         out.write("</field>\n");
 
 //        if (classToPrefix.get(feature.getClass()).equals("eh")) System.out.println(classToPrefix.get(feature.getClass()) + " " + Base64.encodeBase64String(feature.getByteArrayRepresentation()));
-        
+
     }
 }
