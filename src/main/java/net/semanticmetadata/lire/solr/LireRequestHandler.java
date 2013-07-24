@@ -214,7 +214,7 @@ public class LireRequestHandler extends RequestHandlerBase {
     private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
-        TopDocs docs = searcher.search(query, 2000);
+        TopDocs docs = searcher.search(query, 500);
         rsp.add("RawDocsCount", docs.scoreDocs.length+"");
 //        System.out.println("** Query feature: " + queryFeature.getClass().getName() + ": " + Arrays.toString(queryFeature.getDoubleHistogram()));
 //        System.out.println("** Doing re-rank.");

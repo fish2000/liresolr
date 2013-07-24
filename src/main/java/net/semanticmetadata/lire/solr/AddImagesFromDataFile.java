@@ -20,25 +20,25 @@ import java.util.zip.GZIPInputStream;
  * To change this template use File | Settings | File Templates.
  */
 public class AddImagesFromDataFile {
-    boolean verbose = true;
     private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
 
     static {
         classToPrefix.put(ColorLayout.class, "cl");
         classToPrefix.put(EdgeHistogram.class, "eh");
         classToPrefix.put(PHOG.class, "ph");
-        classToPrefix.put(OpponentHistogram.class, "oh");
+//        classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(JCD.class, "jc");
     }
+
+    boolean verbose = true;
 
     public static void main(String[] args) throws IOException, IllegalAccessException, ClassNotFoundException, InstantiationException {
 //        BitSampling.setNumFunctionBundles(80);
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v7.out"));
+        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v8.out"));
     }
-
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         InputStream in = new FileInputStream(inputFile);
@@ -101,7 +101,8 @@ public class AddImagesFromDataFile {
     }
 
     private void addToDocument(LireFeature feature, Writer out, File file) throws IOException {
-        try {
+
+ /*       try {
             LireFeature f1 = feature.getClass().newInstance();
             f1.extract(ImageIO.read(file));
             float distance = f1.getDistance(feature);
@@ -114,17 +115,19 @@ public class AddImagesFromDataFile {
         } catch (Exception e) {
             e.printStackTrace();
 
+        }*/
+
+        if (classToPrefix.get(feature.getClass()) != null) {
+            String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
+            String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
+
+            out.write("\t\t<field name=\"" + histogramField + "\">");
+            out.write(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
+            out.write("</field>\n");
+            out.write("\t\t<field name=\"" + hashesField + "\">");
+            out.write(SerializationUtils.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
+            out.write("</field>\n");
         }
-
-        String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
-        String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
-
-        out.write("\t\t<field name=\"" + histogramField + "\">");
-        out.write(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
-        out.write("</field>\n");
-        out.write("\t\t<field name=\"" + hashesField + "\">");
-        out.write(SerializationUtils.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
-        out.write("</field>\n");
 
 //        if (classToPrefix.get(feature.getClass()).equals("eh")) System.out.println(classToPrefix.get(feature.getClass()) + " " + Base64.encodeBase64String(feature.getByteArrayRepresentation()));
 
