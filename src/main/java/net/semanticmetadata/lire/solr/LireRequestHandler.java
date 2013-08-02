@@ -34,8 +34,9 @@ import java.util.TreeSet;
  */
 
 public class LireRequestHandler extends RequestHandlerBase {
-    private int countRequests = 0;
     private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
+    private long time = 0;
+    private int countRequests = 0;
     private int defaultNumberOfResults = 60;
 
     static {
@@ -173,7 +174,6 @@ public class LireRequestHandler extends RequestHandlerBase {
         doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
     }
 
-
     private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException {
         SolrParams params = req.getParams();
         SolrIndexSearcher searcher = req.getSearcher();
@@ -214,8 +214,11 @@ public class LireRequestHandler extends RequestHandlerBase {
     private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
+        time = System.currentTimeMillis();
         TopDocs docs = searcher.search(query, 500);
-        rsp.add("RawDocsCount", docs.scoreDocs.length+"");
+        time = System.currentTimeMillis() - time;
+        rsp.add("RawDocsCount", docs.scoreDocs.length + "");
+        rsp.add("RawDocsSearchTime", time + "");
 //        System.out.println("** Query feature: " + queryFeature.getClass().getName() + ": " + Arrays.toString(queryFeature.getDoubleHistogram()));
 //        System.out.println("** Doing re-rank.");
         // re-rank
@@ -226,6 +229,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         String name = field.replace("_ha", "_hi");
         Document d;
 //        System.out.println("** Iterating docs.");
+        time = System.currentTimeMillis();
         for (int i = 0; i < docs.scoreDocs.length; i++) {
 //            System.out.println("** " + count);
 //            System.out.println("** Getting document " + docs.scoreDocs[i].doc + " with score " + docs.scoreDocs[i].score);
@@ -252,7 +256,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             }
         }
 //        System.out.println("** Creating response.");
-        // todo: create response:
+        time = System.currentTimeMillis() - time;
+        rsp.add("ReRankSearchTime", time + "");
         LinkedList list = new LinkedList();
         for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
             SimpleResult result = it.next();

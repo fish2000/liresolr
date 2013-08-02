@@ -91,6 +91,6 @@
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="../../Apps/example/solr-webapp/webapp/WEB-INF/lib"/>
+        <copy file="dist/lire-request-handler.jar" todir="D:/Java/solr-4.4.0/example/solr-webapp/webapp/WEB-INF/lib"/>
     </target>
 </project>

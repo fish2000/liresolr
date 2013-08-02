@@ -37,7 +37,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v8.out"));
+        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v9.out"));
     }
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
