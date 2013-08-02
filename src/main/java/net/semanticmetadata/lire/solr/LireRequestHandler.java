@@ -106,22 +106,19 @@ public class LireRequestHandler extends RequestHandlerBase {
 
         if (hits.scoreDocs.length > 0) {
             Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
-            String[] hashes = d.getValues(paramField)[0].trim().split(" ");
             String histogramFieldName = paramField.replace("_ha", "_hi");
             queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
                     d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
             int paramRows = defaultNumberOfResults;
             if (req.getParams().getInt("rows") != null)
                 paramRows = req.getParams().getInt("rows");
+            // Re-generating the hashes to save space (instead of storing them in the index)
+            int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
             BooleanQuery query = new BooleanQuery();
             for (int i = 0; i < hashes.length; i++) {
                 // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-                hashes[i] = hashes[i].trim();
-                if (hashes[i].length() > 0) {
-                    query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i].trim())), BooleanClause.Occur.SHOULD));
-//                System.out.println("** " + paramField + ": " + hashes[i].trim());
+                    query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i]+"")), BooleanClause.Occur.SHOULD));
                 }
-            }
             doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
         }
     }
