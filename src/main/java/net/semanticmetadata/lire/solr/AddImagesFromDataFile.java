@@ -26,7 +26,7 @@ public class AddImagesFromDataFile {
         classToPrefix.put(ColorLayout.class, "cl");
         classToPrefix.put(EdgeHistogram.class, "eh");
         classToPrefix.put(PHOG.class, "ph");
-//        classToPrefix.put(OpponentHistogram.class, "oh");
+        classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(JCD.class, "jc");
     }
 
@@ -37,7 +37,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.generateHashFunctions("BitSampling.obj");
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v9e.out"));
+        a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v10.out"));
     }
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
