@@ -117,7 +117,7 @@ public class LireRequestHandler extends RequestHandlerBase {
             BooleanQuery query = new BooleanQuery();
             for (int i = 0; i < hashes.length; i++) {
                 // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-                    query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i]+"")), BooleanClause.Occur.SHOULD));
+                    query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
                 }
             doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
         }
@@ -286,5 +286,14 @@ public class LireRequestHandler extends RequestHandlerBase {
         NamedList<Object> statistics = super.getStatistics();
         statistics.add("Number of Requests", countRequests);
         return statistics;
+    }
+
+    public static String arrayToString(int[] array) {
+        StringBuilder sb = new StringBuilder(array.length*8);
+        for (int i = 0; i < array.length; i++) {
+            if (i>0) sb.append(' ');
+            sb.append(Integer.toHexString(array[i]));
+        }
+        return sb.toString();
     }
 }

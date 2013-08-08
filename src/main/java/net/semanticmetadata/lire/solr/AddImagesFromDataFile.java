@@ -125,11 +125,20 @@ public class AddImagesFromDataFile {
             out.write(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
             out.write("</field>\n");
             out.write("\t\t<field name=\"" + hashesField + "\">");
-            out.write(SerializationUtils.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
+            out.write(arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
             out.write("</field>\n");
         }
 
 //        if (classToPrefix.get(feature.getClass()).equals("eh")) System.out.println(classToPrefix.get(feature.getClass()) + " " + Base64.encodeBase64String(feature.getByteArrayRepresentation()));
 
+    }
+
+    public static String arrayToString(int[] array) {
+        StringBuilder sb = new StringBuilder(array.length*8);
+        for (int i = 0; i < array.length; i++) {
+            if (i>0) sb.append(' ');
+            sb.append(Integer.toHexString(array[i]));
+        }
+        return sb.toString();
     }
 }

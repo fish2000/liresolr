@@ -87,7 +87,9 @@
             </fileset>
         </copy-->
 
-        <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}"/>
+        <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}">
+            <exclude name="**/apache/**" />
+        </jar>
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
