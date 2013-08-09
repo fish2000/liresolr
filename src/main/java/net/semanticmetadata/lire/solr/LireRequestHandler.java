@@ -3,6 +3,8 @@ package net.semanticmetadata.lire.solr;
 import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
+import net.semanticmetadata.lire.utils.ImageUtils;
+import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -151,6 +153,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         if (params.get("rows") != null)
             paramRows = params.getInt("rows");
         BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
+        img = ImageUtils.trimWhiteSpace(img);
         LireFeature feat;
         // getting the right feature per field:
         if (paramField == null) feat = new EdgeHistogram();
@@ -166,7 +169,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         BooleanQuery query = new BooleanQuery();
         for (int i = 0; i < hashes.length; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-            query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i] + "")), BooleanClause.Occur.SHOULD));
+            query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
         }
         doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
     }
