@@ -4,15 +4,17 @@ import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;
-import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.MultiDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.RequestHandlerBase;
@@ -37,6 +39,11 @@ public class LireRequestHandler extends RequestHandlerBase {
     private long time = 0;
     private int countRequests = 0;
     private int defaultNumberOfResults = 60;
+    /**
+     * number of candidate results retrieved from the index. The higher this number, the slower,
+     * the but more accurate the retrieval will be.
+     */
+    private int candidateResultNumber = 500;
 
     static {
         fieldToClass.put("cl_ha", ColorLayout.class);
@@ -95,39 +102,43 @@ public class LireRequestHandler extends RequestHandlerBase {
      */
     private void handleIdSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrIndexSearcher searcher = req.getSearcher();
-        TopDocs hits = searcher.search(new TermQuery(new Term("id", req.getParams().get("id"))), 1);
-        String paramField = "cl_ha";
-        if (req.getParams().get("field") != null)
-            paramField = req.getParams().get("field");
-        LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
-        rsp.add("QueryField", paramField);
-        rsp.add("QueryFeature", queryFeature.getClass().getName());
+        try {
+            TopDocs hits = searcher.search(new TermQuery(new Term("id", req.getParams().get("id"))), 1);
+            String paramField = "cl_ha";
+            if (req.getParams().get("field") != null)
+                paramField = req.getParams().get("field");
+            LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
+            rsp.add("QueryField", paramField);
+            rsp.add("QueryFeature", queryFeature.getClass().getName());
 
-        if (hits.scoreDocs.length > 0) {
-            Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
-            String histogramFieldName = paramField.replace("_ha", "_hi");
-            queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
-                    d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
-            int paramRows = defaultNumberOfResults;
-            if (req.getParams().getInt("rows") != null)
-                paramRows = req.getParams().getInt("rows");
-            // Re-generating the hashes to save space (instead of storing them in the index)
-            int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
-            // just use 50% of the hashes for search ...
-            List<Integer> hList = new ArrayList<Integer>(hashes.length);
-            for (int i = 0; i < hashes.length; i++) {
-                hList.add(hashes[i]);
+            if (hits.scoreDocs.length > 0) {
+                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
+                String histogramFieldName = paramField.replace("_ha", "_hi");
+                queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
+                        d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
+                int paramRows = defaultNumberOfResults;
+                if (req.getParams().getInt("rows") != null)
+                    paramRows = req.getParams().getInt("rows");
+                // Re-generating the hashes to save space (instead of storing them in the index)
+                int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
+                // just use 50% of the hashes for search ...
+                BooleanQuery query = createQuery(hashes, paramField, 0.5d);
+                doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+            } else {
+                rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
             }
-            Collections.shuffle(hList);
-            BooleanQuery query = new BooleanQuery();
-            for (int i = 0; i < hashes.length/2; i++) {
-                // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-                query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hList.get(i)))), BooleanClause.Occur.SHOULD));
-                }
-            doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
+        } catch (Exception e) {
+            rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
+                    + ": " + e.getMessage());
         }
     }
 
+    /**
+     * Returns a random set of documents from the index. Mainly for testing purposes.
+     * @param req
+     * @param rsp
+     * @throws IOException
+     */
     private void handleRandomSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException {
         SolrIndexSearcher searcher = req.getSearcher();
         DirectoryReader indexReader = searcher.getIndexReader();
@@ -146,6 +157,15 @@ public class LireRequestHandler extends RequestHandlerBase {
         rsp.add("docs", list);
     }
 
+    /**
+     * Searches for an image given by an URL. Note that (i) extracting image features takes time and
+     * (ii) not every image is readable by Java.
+     * @param req
+     * @param rsp
+     * @throws IOException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
     private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrParams params = req.getParams();
         String paramUrl = params.get("url");
@@ -155,28 +175,41 @@ public class LireRequestHandler extends RequestHandlerBase {
         int paramRows = defaultNumberOfResults;
         if (params.get("rows") != null)
             paramRows = params.getInt("rows");
-        BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
-        img = ImageUtils.trimWhiteSpace(img);
-        LireFeature feat;
-        // getting the right feature per field:
-        if (paramField == null) feat = new EdgeHistogram();
-        else {
-            if (paramField.equals("cl_ha")) feat = new ColorLayout();
-            else if (paramField.equals("jc_ha")) feat = new JCD();
-            else if (paramField.equals("ph_ha")) feat = new PHOG();
-            else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
-            else feat = new EdgeHistogram();
+        LireFeature feat = null;
+        BooleanQuery query = null;
+        // wrapping the whole part in the try
+        try {
+            BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
+            img = ImageUtils.trimWhiteSpace(img);
+            // getting the right feature per field:
+            if (paramField == null) feat = new EdgeHistogram();
+            else {
+                if (paramField.equals("cl_ha")) feat = new ColorLayout();
+                else if (paramField.equals("jc_ha")) feat = new JCD();
+                else if (paramField.equals("ph_ha")) feat = new PHOG();
+                else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
+                else feat = new EdgeHistogram();
+            }
+            feat.extract(img);
+            int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
+            // just use 50% of the hashes for search ...
+            query = createQuery(hashes, paramField, 0.5d);
+        } catch (Exception e) {
+            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+            e.printStackTrace();
         }
-        feat.extract(img);
-        int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
-        BooleanQuery query = new BooleanQuery();
-        for (int i = 0; i < hashes.length; i++) {
-            // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-            query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
-        }
-        doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
+        // search if the feature has been extracted.
+        if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
     }
 
+    /**
+     * Search based on the given image hashes.
+     * @param req
+     * @param rsp
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
     private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException {
         SolrParams params = req.getParams();
         SolrIndexSearcher searcher = req.getSearcher();
@@ -214,37 +247,39 @@ public class LireRequestHandler extends RequestHandlerBase {
         doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
     }
 
+    /**
+     * Actual search implementation based on (i) hash based retrieval and (ii) feature based re-ranking.
+     * @param rsp
+     * @param searcher
+     * @param field
+     * @param maximumHits
+     * @param query
+     * @param queryFeature
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
     private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int maximumHits, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
+        // Taking the time of search for statistical purposes.
         time = System.currentTimeMillis();
-        TopDocs docs = searcher.search(query, 500);
+        TopDocs docs = searcher.search(query, candidateResultNumber);
         time = System.currentTimeMillis() - time;
         rsp.add("RawDocsCount", docs.scoreDocs.length + "");
         rsp.add("RawDocsSearchTime", time + "");
-//        System.out.println("** Query feature: " + queryFeature.getClass().getName() + ": " + Arrays.toString(queryFeature.getDoubleHistogram()));
-//        System.out.println("** Doing re-rank.");
         // re-rank
+        time = System.currentTimeMillis();
         TreeSet<SimpleResult> resultScoreDocs = new TreeSet<SimpleResult>();
         float maxDistance = -1f;
         float tmpScore;
 
         String name = field.replace("_ha", "_hi");
         Document d;
-//        System.out.println("** Iterating docs.");
-        time = System.currentTimeMillis();
         for (int i = 0; i < docs.scoreDocs.length; i++) {
-//            System.out.println("** " + count);
-//            System.out.println("** Getting document " + docs.scoreDocs[i].doc + " with score " + docs.scoreDocs[i].score);
             d = searcher.doc(docs.scoreDocs[i].doc);
-//            System.out.println("** Getting data from field " + name);
-//            tmpFeature.setByteArrayRepresentation(Base64.decodeBase64(d.getValues(name)[0]));
-//            System.out.println("** id: " + d.getValues("id")[0]);
-//            System.out.println("** Base64: " + org.apache.solr.common.util.Base64.byteArrayToBase64(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length));
-//            System.out.println("** Feature: " + tmpFeature.getClass().getName());
             tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
             tmpScore = queryFeature.getDistance(tmpFeature);
-//            System.out.println("** Score: " + tmpScore + " - max Score: " + maxDistance);
             if (resultScoreDocs.size() < maximumHits) {
                 resultScoreDocs.add(new SimpleResult(tmpScore, d, docs.scoreDocs[i].doc));
                 maxDistance = resultScoreDocs.last().getDistance();
@@ -294,12 +329,17 @@ public class LireRequestHandler extends RequestHandlerBase {
         return statistics;
     }
 
-    public static String arrayToString(int[] array) {
-        StringBuilder sb = new StringBuilder(array.length*8);
-        for (int i = 0; i < array.length; i++) {
-            if (i>0) sb.append(' ');
-            sb.append(Integer.toHexString(array[i]));
+    private BooleanQuery createQuery(int[] hashes, String paramField, double size) {
+        List<Integer> hList = new ArrayList<Integer>(hashes.length);
+        for (int i = 0; i < hashes.length; i++) {
+            hList.add(hashes[i]);
         }
-        return sb.toString();
+        Collections.shuffle(hList);
+        BooleanQuery query = new BooleanQuery();
+        for (int i = 0; i < hashes.length; i++) {
+            // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
+            query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
+        }
+        return query;
     }
 }
