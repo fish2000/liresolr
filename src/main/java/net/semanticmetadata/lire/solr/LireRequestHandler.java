@@ -24,10 +24,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
@@ -116,10 +113,16 @@ public class LireRequestHandler extends RequestHandlerBase {
                 paramRows = req.getParams().getInt("rows");
             // Re-generating the hashes to save space (instead of storing them in the index)
             int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
-            BooleanQuery query = new BooleanQuery();
+            // just use 50% of the hashes for search ...
+            List<Integer> hList = new ArrayList<Integer>(hashes.length);
             for (int i = 0; i < hashes.length; i++) {
+                hList.add(hashes[i]);
+            }
+            Collections.shuffle(hList);
+            BooleanQuery query = new BooleanQuery();
+            for (int i = 0; i < hashes.length/2; i++) {
                 // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
-                    query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
+                query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hList.get(i)))), BooleanClause.Occur.SHOULD));
                 }
             doSearch(rsp, searcher, paramField, paramRows, query, queryFeature);
         }
