@@ -43,7 +43,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * number of candidate results retrieved from the index. The higher this number, the slower,
      * the but more accurate the retrieval will be.
      */
-    private int candidateResultNumber = 500;
+    private int candidateResultNumber = 1500;
 
     static {
         fieldToClass.put("cl_ha", ColorLayout.class);
@@ -112,10 +112,13 @@ public class LireRequestHandler extends RequestHandlerBase {
             rsp.add("QueryFeature", queryFeature.getClass().getName());
 
             if (hits.scoreDocs.length > 0) {
-                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
+                // Using DocValues to get the actual data from the index.
+                BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), paramField.replace("_ha", "_hi")); // ***  #
+                BytesRef bytesRef = new BytesRef();
+                binaryValues.get(hits.scoreDocs[0].doc, bytesRef);
+//                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
                 String histogramFieldName = paramField.replace("_ha", "_hi");
-                queryFeature.setByteArrayRepresentation(d.getBinaryValue(histogramFieldName).bytes,
-                        d.getBinaryValue(histogramFieldName).offset, d.getBinaryValue(histogramFieldName).length);
+                queryFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
                 int paramRows = defaultNumberOfResults;
                 if (req.getParams().getInt("rows") != null)
                     paramRows = req.getParams().getInt("rows");
@@ -135,6 +138,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     /**
      * Returns a random set of documents from the index. Mainly for testing purposes.
+     *
      * @param req
      * @param rsp
      * @throws IOException
@@ -160,6 +164,7 @@ public class LireRequestHandler extends RequestHandlerBase {
     /**
      * Searches for an image given by an URL. Note that (i) extracting image features takes time and
      * (ii) not every image is readable by Java.
+     *
      * @param req
      * @param rsp
      * @throws IOException
@@ -204,6 +209,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     /**
      * Search based on the given image hashes.
+     *
      * @param req
      * @param rsp
      * @throws IOException
@@ -249,6 +255,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     /**
      * Actual search implementation based on (i) hash based retrieval and (ii) feature based re-ranking.
+     *
      * @param rsp
      * @param searcher
      * @param field
@@ -276,19 +283,26 @@ public class LireRequestHandler extends RequestHandlerBase {
 
         String name = field.replace("_ha", "_hi");
         Document d;
+        // iterating and re-ranking the documents.
+        BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name); // ***  #
+        BytesRef bytesRef = new BytesRef();
         for (int i = 0; i < docs.scoreDocs.length; i++) {
-            d = searcher.doc(docs.scoreDocs[i].doc);
-            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
+            // using DocValues to retrieve the field values ...
+            binaryValues.get(docs.scoreDocs[i].doc, bytesRef);
+            tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
+            // Getting the document from the index.
+            // This is the slow step based on the field compression of stored fields.
+//            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
             tmpScore = queryFeature.getDistance(tmpFeature);
             if (resultScoreDocs.size() < maximumHits) {
-                resultScoreDocs.add(new SimpleResult(tmpScore, d, docs.scoreDocs[i].doc));
+                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
                 maxDistance = resultScoreDocs.last().getDistance();
             } else if (tmpScore < maxDistance) {
 //                if it is nearer to the sample than at least one of the current set:
 //                remove the last one ...
                 resultScoreDocs.remove(resultScoreDocs.last());
 //                add the new one ...
-                resultScoreDocs.add(new SimpleResult(tmpScore, d, docs.scoreDocs[i].doc));
+                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
 //                and set our new distance border ...
                 maxDistance = resultScoreDocs.last().getDistance();
             }
