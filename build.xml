@@ -77,6 +77,11 @@
             </fileset>
         </copy-->
         <unjar src="lib/lire.jar" dest="${build}"/>
+        <!-- replace the bit sampling data file -->
+
+        <!--delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/-->
+        <!--copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/-->
+
         <!--copy todir="${dist}/docs">
             <fileset dir="src/main/docs">
                 <patternset>
@@ -94,5 +99,15 @@
 
     <target name="copy_jar_to_jetty" depends="dist">
         <copy file="dist/lire-request-handler.jar" todir="D:/Java/Apps/solr-4.4.0/example/solr-webapp/webapp/WEB-INF/lib"/>
+    </target>
+
+    <target name="index" depends="compile">
+        <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
+            <jvmarg line="-Xmx2048M -server"/>
+            <!-- adapt this argument to use your pictures -->
+            <arg line="-i D:/Temp/tmp/dir.txt -o D:/Temp/tmp/out.xml -n 16 -f"/>
+
+        </java>
     </target>
 </project>

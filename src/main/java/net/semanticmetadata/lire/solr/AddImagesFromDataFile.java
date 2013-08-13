@@ -34,7 +34,9 @@ public class AddImagesFromDataFile {
 
     public static void main(String[] args) throws IOException, IllegalAccessException, ClassNotFoundException, InstantiationException {
 //        BitSampling.setNumFunctionBundles(80);
-//        BitSampling.generateHashFunctions("BitSampling.obj");
+//        BitSampling.setBits(24);
+//        BitSampling.generateHashFunctions("LshBitSampling.obj");
+//        BitSampling.readHashFunctions(new FileInputStream("LshBitSampling.obj"));
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
         a.createXml(new File("D:/Temp"), new File("D:\\DataSets/wipo_v10.out"));
