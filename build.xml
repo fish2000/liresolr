@@ -39,7 +39,9 @@
         </propertyfile>
         <property file="${config}/build.properties"/>
         <echo file="default.mf" append="false">Build-Date: ${touch.time}
-            Build-Number: ${build-number}
+Build-Number: ${build-number}
+Class-Path: lib/commons-codec-1.8.jar
+Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         </echo>
         <javac srcdir="${src}" destdir="${build}">
             <classpath refid="classpath.path"/>
