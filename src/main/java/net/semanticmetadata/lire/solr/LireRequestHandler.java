@@ -154,8 +154,8 @@ public class LireRequestHandler extends RequestHandlerBase {
         while (list.size() < paramRows) {
             HashMap m = new HashMap(2);
             Document d = indexReader.document((int) Math.floor(Math.random() * maxDoc));
-            m.put("id", d.getValues("id"));
-            m.put("title", d.getValues("title"));
+            m.put("id", d.getValues("id")[0]);
+            m.put("title", d.getValues("title")[0]);
             list.add(m);
         }
         rsp.add("docs", list);
