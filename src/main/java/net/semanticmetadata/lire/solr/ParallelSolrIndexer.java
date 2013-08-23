@@ -19,6 +19,7 @@ import java.util.*;
 public class ParallelSolrIndexer implements Runnable {
     private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
     private static boolean force = false;
+    private static boolean individualFiles = false;
     private static int numberOfThreads = 4;
     Stack<WorkItem> images = new Stack<WorkItem>();
     boolean ended = false;
@@ -167,13 +168,14 @@ public class ParallelSolrIndexer implements Runnable {
         boolean configured = true;
         if (fileList == null || !fileList.exists()) configured = false;
         else if (outFile == null) {
+            individualFiles = true;
             // create an outfile ...
-            try {
-                outFile = new File(fileList.getCanonicalPath() + ".xml");
-                System.out.println("Setting out file to " + outFile.getCanonicalFile());
-            } catch (IOException e) {
-                configured = false;
-            }
+//            try {
+//                outFile = new File(fileList.getCanonicalPath() + ".xml");
+//                System.out.println("Setting out file to " + outFile.getCanonicalFile());
+//            } catch (IOException e) {
+//                configured = false;
+//            }
         } else if (outFile.exists() && !force) {
             System.err.println(outFile.getName() + " already exists. Please delete or choose another outfile.");
             configured = false;
@@ -189,8 +191,10 @@ public class ParallelSolrIndexer implements Runnable {
             return;
         }
         try {
-            dos = new BufferedOutputStream(new FileOutputStream(outFile));
-            dos.write("<add>\n".getBytes());
+            if (!individualFiles) {
+                dos = new BufferedOutputStream(new FileOutputStream(outFile));
+                dos.write("<add>\n".getBytes());
+            }
             Thread p = new Thread(new Producer());
             p.start();
             LinkedList<Thread> threads = new LinkedList<Thread>();
@@ -207,8 +211,10 @@ public class ParallelSolrIndexer implements Runnable {
             }
             long l1 = System.currentTimeMillis() - l;
             System.out.println("Analyzed " + overallCount + " images in " + l1 / 1000 + " seconds, ~" + (overallCount > 0 ? (l1 / overallCount) : "inf.") + " ms each.");
-            dos.write("</add>\n".getBytes());
-            dos.close();
+            if (!individualFiles) {
+                dos.write("</add>\n".getBytes());
+                dos.close();
+            }
 //            writer.commit();
 //            writer.close();
 //            threadFinished = true;
@@ -358,9 +364,16 @@ public class ParallelSolrIndexer implements Runnable {
                         }
                         sb.append("\t</doc>\n");
                         // finally write everything to the stream - in case no exception was thrown..
-                        synchronized (dos) {
-                            dos.write(sb.toString().getBytes());
-                            dos.flush();
+                        if (!individualFiles) {
+                            synchronized (dos) {
+                                dos.write(sb.toString().getBytes());
+                                dos.flush();
+                            }
+                        } else {
+                            OutputStream mos = new BufferedOutputStream(new FileOutputStream(tmp.getFileName() + "_solr.xml"));
+                            mos.write(sb.toString().getBytes());
+                            mos.flush();
+                            mos.close();
                         }
                     }
                 } catch (Exception e) {
