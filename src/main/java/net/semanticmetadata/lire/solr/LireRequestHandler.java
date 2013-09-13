@@ -350,7 +350,9 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
         Collections.shuffle(hList);
         BooleanQuery query = new BooleanQuery();
-        for (int i = 0; i < hashes.length; i++) {
+        int numHashes = (int) Math.min(hashes.length, Math.floor(hashes.length * size));
+        if (numHashes < 5) numHashes = hashes.length;
+        for (int i = 0; i < numHashes; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
             query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
         }
