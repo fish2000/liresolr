@@ -108,7 +108,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i D:/Temp/tmp/dir.txt -o D:/Temp/tmp/out.xml -n 16 -f"/>
+            <arg line="-i D:/Temp/tmp/dir.txt -n 16 -f"/>
 
         </java>
     </target>
