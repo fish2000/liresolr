@@ -17,6 +17,7 @@ import java.util.Map;
  * A query function for sorting results based on the LIRE CBIR functions.
  * Implementation based partially on the outdated guide given on http://www.supermind.org/blog/756,
  * comments on the mailing list provided from Chris Hostetter, and the 4.4 Solr & Lucene source.
+ *
  * @author Mathias Lux, 17.09.13 12:26
  */
 public class LireValueSource extends ValueSource {
@@ -24,32 +25,28 @@ public class LireValueSource extends ValueSource {
     byte[] histogramData;
     LireFeature feature, tmpFeature;
 
-    public LireValueSource(String field, byte[] hist) {
-        if (field!=null) this.field = field;
+    public LireValueSource(String featureField, byte[] hist) {
+        if (featureField != null) field = featureField;
+        if (!field.endsWith("_hi")) field += "_hi";
         this.histogramData = hist;
 
         if (field == null) {
             feature = new EdgeHistogram();
             tmpFeature = new EdgeHistogram();
-        }
-        else {
+        } else {
             if (field.equals("cl_hi")) {
                 feature = new ColorLayout();
                 tmpFeature = new ColorLayout();
-            }
-            else if (field.equals("jc_hi")) {
+            } else if (field.equals("jc_hi")) {
                 feature = new JCD();
                 tmpFeature = new JCD();
-            }
-            else if (field.equals("ph_hi")) {
+            } else if (field.equals("ph_hi")) {
                 feature = new PHOG();
                 tmpFeature = new PHOG();
-            }
-            else if (field.equals("oh_hi")) {
+            } else if (field.equals("oh_hi")) {
                 feature = new OpponentHistogram();
                 tmpFeature = new OpponentHistogram();
-            }
-            else {
+            } else {
                 feature = new EdgeHistogram();
                 tmpFeature = new EdgeHistogram();
             }
@@ -64,6 +61,7 @@ public class LireValueSource extends ValueSource {
             final BinaryDocValues binaryValues = FieldCache.DEFAULT.getTerms(readerContext.reader(), field);
             return new FunctionValues() {
                 BytesRef tmp = new BytesRef();
+
                 @Override
                 public boolean exists(int doc) {
                     return true;
@@ -75,6 +73,7 @@ public class LireValueSource extends ValueSource {
                     return target.length > 0;
                 }
 
+                // This is the actual value returned
                 @Override
                 public float floatVal(int doc) {
                     binaryValues.get(doc, tmp);
@@ -90,6 +89,14 @@ public class LireValueSource extends ValueSource {
                 @Override
                 public String toString(int doc) {
                     return description() + '=' + strVal(doc);
+                }
+
+                @Override
+                /**
+                 * This method has to be implemented to support sorting!
+                 */
+                public double doubleVal(int doc) {
+                    return floatVal(doc);
                 }
             };
         } else {
