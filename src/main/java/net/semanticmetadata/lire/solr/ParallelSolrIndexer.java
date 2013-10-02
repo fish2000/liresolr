@@ -67,7 +67,7 @@ public class ParallelSolrIndexer implements Runnable {
                     e.setFileList(new File(args[i + 1]));
                 else printHelp();
             } else if (arg.startsWith("-o")) {
-                // out file
+                // out file, if it's not set a single file for each input image is created.
                 if ((i + 1) < args.length)
                     e.setOutFile(new File(args[i + 1]));
                 else printHelp();
@@ -114,7 +114,7 @@ public class ParallelSolrIndexer implements Runnable {
                 "\n" +
                 "1. Usage\n" +
                 "========\n" +
-                "$> ParallelSolrIndexer -i <infile> [-o <outfile>] [-n <threads>] [-m <max_side_length>]\n" +
+                "$> ParallelSolrIndexer -i <infile> [-o <outfile>] [-n <threads>] [-f] [-m <max_side_length>]\n" +
                 "\n" +
                 "Note: if you don't specify an outfile just \".xml\" is appended to the infile for output.\n" +
                 "\n");
