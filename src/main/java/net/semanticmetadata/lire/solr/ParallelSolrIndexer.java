@@ -379,13 +379,13 @@ public class ParallelSolrIndexer implements Runnable {
                         BufferedImage img = ImageUtils.trimWhiteSpace(ImageIO.read(b));
                         if (maxSideLength > 50) img = ImageUtils.scaleImage(img, maxSideLength);
                         byte[] tmpBytes = tmp.getFileName().getBytes();
-                        sb.append("\t<doc>\n");
-                        sb.append("\t\t<field name=\"id\">");
+                        sb.append("<doc>");
+                        sb.append("<field name=\"id\">");
                         sb.append(tmp.getFileName());
-                        sb.append("</field>\n");
-                        sb.append("\t\t<field name=\"title\">");
+                        sb.append("</field>");
+                        sb.append("<field name=\"title\">");
                         sb.append(new File(tmp.getFileName()).getName());
-                        sb.append("</field>\n");
+                        sb.append("</field>");
 
                         for (LireFeature feature : features) {
                             if (classToPrefix.get(feature.getClass()) != null) {
@@ -393,15 +393,15 @@ public class ParallelSolrIndexer implements Runnable {
                                 String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
                                 String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
 
-                                sb.append("\t\t<field name=\"" + histogramField + "\">");
+                                sb.append("<field name=\"" + histogramField + "\">");
                                 sb.append(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
-                                sb.append("</field>\n");
-                                sb.append("\t\t<field name=\"" + hashesField + "\">");
+                                sb.append("</field>");
+                                sb.append("<field name=\"" + hashesField + "\">");
                                 sb.append(arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
-                                sb.append("</field>\n");
+                                sb.append("</field>");
                             }
                         }
-                        sb.append("\t</doc>\n");
+                        sb.append("</doc>\n");
                         // finally write everything to the stream - in case no exception was thrown..
                         if (!individualFiles) {
                             synchronized (dos) {

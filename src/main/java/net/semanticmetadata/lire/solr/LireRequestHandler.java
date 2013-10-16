@@ -153,6 +153,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             if (hits.scoreDocs.length > 0) {
                 // Using DocValues to get the actual data from the index.
                 BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), paramField.replace("_ha", "_hi")); // ***  #
+                if (binaryValues == null)
+                    System.err.println("Could not find the DocValues of the query document. Are they in the index?");
                 BytesRef bytesRef = new BytesRef();
                 binaryValues.get(hits.scoreDocs[0].doc, bytesRef);
 //                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
