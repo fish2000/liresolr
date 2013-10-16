@@ -63,11 +63,19 @@ public class LireValueSource extends ValueSource {
     String field = "cl_hi";  //
     byte[] histogramData;
     LireFeature feature, tmpFeature;
+    double maxDistance = -1;
 
-    public LireValueSource(String featureField, byte[] hist) {
+    /**
+     *
+     * @param featureField
+     * @param hist
+     * @param maxDistance the distance value returned if there is no distance calculation possible.
+     */
+    public LireValueSource(String featureField, byte[] hist, double maxDistance) {
         if (featureField != null) field = featureField;
         if (!field.endsWith("_hi")) field += "_hi";
         this.histogramData = hist;
+        this.maxDistance = maxDistance;
 
         if (field == null) {
             feature = new EdgeHistogram();
@@ -145,12 +153,12 @@ public class LireValueSource extends ValueSource {
             return new DocTermsIndexDocValues(this, readerContext, field) {
                 @Override
                 protected String toTerm(String readableValue) {
-                    return "-1";
+                    return Double.toString(maxDistance);
                 }
 
                 @Override
                 public Object objectVal(int doc) {
-                    return "-1";
+                    return maxDistance;
                 }
 
                 @Override
@@ -160,7 +168,7 @@ public class LireValueSource extends ValueSource {
 
 
                 public double doubleVal(int doc) {
-                    return -1d;
+                    return maxDistance;
                 }
             };
         }

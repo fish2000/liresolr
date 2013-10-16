@@ -70,6 +70,9 @@ public class LireValueSourceParser extends ValueSourceParser {
     public ValueSource parse(FunctionQParser fp) throws SyntaxError {
         String field=fp.parseArg();                          // eg. cl_hi
         byte[] hist= Base64.decodeBase64(fp.parseArg());     // eg. FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA=
-        return new LireValueSource(field, hist);
+        double maxDistance = Double.MAX_VALUE;
+        if (fp.hasMoreArguments())                           // if there is a third argument, it's the max value to return if there is none. Note the query cache is not updated upon parameter change.
+            maxDistance = Double.parseDouble(fp.parseArg());
+        return new LireValueSource(field, hist, maxDistance);
     }
 }
