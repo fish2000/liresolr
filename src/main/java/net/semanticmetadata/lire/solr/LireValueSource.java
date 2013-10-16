@@ -103,7 +103,7 @@ public class LireValueSource extends ValueSource {
 
                 @Override
                 public boolean exists(int doc) {
-                    return true;
+                    return bytesVal(doc, tmp);
                 }
 
                 @Override
@@ -116,8 +116,10 @@ public class LireValueSource extends ValueSource {
                 @Override
                 public float floatVal(int doc) {
                     binaryValues.get(doc, tmp);
-                    tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
-                    return tmpFeature.getDistance(feature);
+                    if (tmp.length > 0) {
+                        tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
+                        return tmpFeature.getDistance(feature);
+                    } else return -1f;
                 }
 
                 @Override
@@ -135,25 +137,30 @@ public class LireValueSource extends ValueSource {
                  * This method has to be implemented to support sorting!
                  */
                 public double doubleVal(int doc) {
-                    return floatVal(doc);
+                    return (double) floatVal(doc);
                 }
             };
         } else {
+            // there is no DocVal to sort by. Therefore we need to set the function value to -1 and everything without DocVal gets ranked first?
             return new DocTermsIndexDocValues(this, readerContext, field) {
-
                 @Override
                 protected String toTerm(String readableValue) {
-                    return readableValue;
+                    return "-1";
                 }
 
                 @Override
                 public Object objectVal(int doc) {
-                    return strVal(doc);
+                    return "-1";
                 }
 
                 @Override
                 public String toString(int doc) {
                     return description() + '=' + strVal(doc);
+                }
+
+
+                public double doubleVal(int doc) {
+                    return -1d;
                 }
             };
         }
