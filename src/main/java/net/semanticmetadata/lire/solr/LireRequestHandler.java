@@ -125,6 +125,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             handleUrlSearch(req, rsp);
         } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
             handleIdSearch(req, rsp);
+        } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
+            handleExtract(req, rsp);
         } else { // lets return random results.
             handleRandomSearch(req, rsp);
         }
@@ -246,6 +248,43 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
         // search if the feature has been extracted.
         if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
+    }
+
+    private void handleExtract(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
+        SolrParams params = req.getParams();
+        String paramUrl = params.get("extract");
+        String paramField = "cl_ha";
+        if (req.getParams().get("field") != null)
+            paramField = req.getParams().get("field");
+//        int paramRows = defaultNumberOfResults;
+//        if (params.get("rows") != null)
+//            paramRows = params.getInt("rows");
+        LireFeature feat = null;
+//        BooleanQuery query = null;
+        // wrapping the whole part in the try
+        try {
+            BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
+            img = ImageUtils.trimWhiteSpace(img);
+            // getting the right feature per field:
+            if (paramField == null) feat = new EdgeHistogram();
+            else {
+                if (paramField.equals("cl_ha")) feat = new ColorLayout();
+                else if (paramField.equals("jc_ha")) feat = new JCD();
+                else if (paramField.equals("ph_ha")) feat = new PHOG();
+                else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
+                else feat = new EdgeHistogram();
+            }
+            feat.extract(img);
+            rsp.add("histogram", Base64.encodeBase64String(feat.getByteArrayRepresentation()));
+//            int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
+//            just use 50% of the hashes for search ...
+//            query = createQuery(hashes, paramField, 0.5d);
+        } catch (Exception e) {
+//            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        // search if the feature has been extracted.
+//        if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
     }
 
     /**

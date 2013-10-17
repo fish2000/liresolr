@@ -9,6 +9,7 @@ The request handler supports four different types of queries
 2.  Get images that are looking like the one with id ...
 3.  Get images looking like the one found at url ...
 4.  Get images with a feature vector like ...
+5.  Extract histogram from an image URL ...
 
 Preliminaries
 -------------
@@ -59,6 +60,15 @@ Parameters:
 -  **feature** .. Base64 encoded feature histogram from LireFeature#getByteArrayRepresentation().
 -  **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
 -  **rows** .. indicates how many results should be returned (optional, default=60).
+
+Extracting histograms
+---------------------
+Extracts the histogram of an image for use with the lire sorting function.
+
+Parameters:
+
+-   **extract** .. the URL of the image. Note that the image has to be accessible by the web server Java has to be able to read it.
+-   **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
 
 
 Installation
