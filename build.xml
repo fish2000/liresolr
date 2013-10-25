@@ -43,7 +43,7 @@ Build-Number: ${build-number}
 Class-Path: lib/commons-codec-1.8.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         </echo>
-        <javac srcdir="${src}" destdir="${build}">
+        <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
             <classpath refid="classpath.path"/>
         </javac>
         <copy todir="${build}">

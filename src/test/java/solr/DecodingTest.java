@@ -1,6 +1,7 @@
 package solr;
 
 import junit.framework.TestCase;
+import net.semanticmetadata.lire.imageanalysis.JCD;
 import net.semanticmetadata.lire.imageanalysis.PHOG;
 import org.apache.commons.codec.binary.Base64;
 
@@ -32,6 +33,13 @@ public class DecodingTest extends TestCase {
         PHOG g = new PHOG();
         g.extract(img);
         System.out.println(g.getDistance(p));
+    }
+
+    public void testJcdDecoding() {
+        String hist = "gYKUk/Siw6GAoYPkxLPG0tXEgcGj08W1xNLl06HCgICClbKRwdCAgA==";
+        byte[] bytes = Base64.decodeBase64(hist);
+        JCD j = new JCD();
+        j.setByteArrayRepresentation(bytes);
     }
 
 }

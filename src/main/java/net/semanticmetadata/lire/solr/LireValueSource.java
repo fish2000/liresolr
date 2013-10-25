@@ -48,6 +48,7 @@ import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.queries.function.docvalues.DocTermsIndexDocValues;
 import org.apache.lucene.search.FieldCache;
 import org.apache.lucene.util.BytesRef;
+import org.apache.solr.common.util.Base64;
 
 import java.io.IOException;
 import java.util.Map;
@@ -98,7 +99,8 @@ public class LireValueSource extends ValueSource {
                 tmpFeature = new EdgeHistogram();
             }
         }
-
+        // debug ...
+        System.out.println("Setting " + feature.getClass().getName() + " to " + Base64.byteArrayToBase64(hist, 0, hist.length));
         feature.setByteArrayRepresentation(hist);
     }
 
