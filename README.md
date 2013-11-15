@@ -113,6 +113,10 @@ You'll also need the respective fields in the schema.xml file:
        <field name="_version_" type="long" indexed="true" stored="true"/>
     </fields>
 
+Do not forget to add the custom field at the very same file:
+
+    <fieldtype name="binaryDV" class="net.semanticmetadata.lire.solr.BinaryDocValuesField"/>
+
 There is also a sort function based on LIRE. The function parser needs to be added to the
 solarconfig.xml file like this:
 
