@@ -61,7 +61,6 @@ import org.apache.solr.search.ValueSourceParser;
  * @author Mathias Lux, 17.09.13, 12:21
  */
 public class LireValueSourceParser extends ValueSourceParser {
-
     public void init(NamedList namedList) {
 
     }
@@ -69,10 +68,13 @@ public class LireValueSourceParser extends ValueSourceParser {
     @Override
     public ValueSource parse(FunctionQParser fp) throws SyntaxError {
         String field=fp.parseArg();                          // eg. cl_hi
-        byte[] hist= Base64.decodeBase64(fp.parseArg());     // eg. FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA=
+        String featureString = fp.parseArg();
+        // System.out.println(featureString);
+        byte[] hist= Base64.decodeBase64(featureString);     // eg. FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA=
         double maxDistance = Double.MAX_VALUE;
-        if (fp.hasMoreArguments())                           // if there is a third argument, it's the max value to return if there is none. Note the query cache is not updated upon parameter change.
+        if (fp.hasMoreArguments()) {                           // if there is a third argument, it's the max value to return if there is none. Note the query cache is not updated upon parameter change.
             maxDistance = Double.parseDouble(fp.parseArg());
+        }
         return new LireValueSource(field, hist, maxDistance);
     }
 }
