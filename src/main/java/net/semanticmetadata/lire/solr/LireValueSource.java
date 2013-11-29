@@ -132,7 +132,8 @@ public class LireValueSource extends ValueSource {
                     if (tmp.length > 0) {
                         tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
                         return tmpFeature.getDistance(feature);
-                    } else return -1f;
+                    } else
+                        return (float) maxDistance; // make sure max distance is returned for those without value!
                 }
 
                 @Override
