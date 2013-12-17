@@ -133,6 +133,20 @@ Examples:
 -  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA%3D") – adding the distance to the reference image to the results
 -  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA%3D")+asc – sorting the results based on the distance to the reference image
 
+If you extract the features yourself, use code like his one:
+
+        // ColorLayout
+        ColorLayout cl = new ColorLayout();
+        cl.extract(ImageIO.read(new File("...")));
+        String arg1 = "cl";
+        String arg2 = Base64.encode(cl.getByteArrayRepresentation());
+
+        // PHOG
+        PHOG ph = new PHOG();
+        ph.extract(ImageIO.read(new File("...")));
+        String arg1 = "ph";
+        String arg2 = Base64.encode(ph.getByteArrayRepresentation());
+
 
 
 Indexing
