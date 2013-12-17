@@ -127,6 +127,7 @@ Then the function lirefunc(arg1,arg2) is available for function queries. Two arg
 
 -  Feature to be used for computing the distance between result and reference image. Possible values are {cl, ph, eh, jc}
 -  Actual Base64 encoded feature vector of the reference image. It can be obtained by calling LireFeature.getByteRepresentation() and by Base64 encoding the resulting byte[] data.
+-  Optional maximum distance for those data items that cannot be processed, ie. don't feature the respective field.
 
 Examples:
 
@@ -135,17 +136,17 @@ Examples:
 
 If you extract the features yourself, use code like his one:
 
-        // ColorLayout
-        ColorLayout cl = new ColorLayout();
-        cl.extract(ImageIO.read(new File("...")));
-        String arg1 = "cl";
-        String arg2 = Base64.encode(cl.getByteArrayRepresentation());
+    // ColorLayout
+    ColorLayout cl = new ColorLayout();
+    cl.extract(ImageIO.read(new File("...")));
+    String arg1 = "cl";
+    String arg2 = Base64.encode(cl.getByteArrayRepresentation());
 
-        // PHOG
-        PHOG ph = new PHOG();
-        ph.extract(ImageIO.read(new File("...")));
-        String arg1 = "ph";
-        String arg2 = Base64.encode(ph.getByteArrayRepresentation());
+    // PHOG
+    PHOG ph = new PHOG();
+    ph.extract(ImageIO.read(new File("...")));
+    String arg1 = "ph";
+    String arg2 = Base64.encode(ph.getByteArrayRepresentation());
 
 
 
