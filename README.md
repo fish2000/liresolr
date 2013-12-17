@@ -129,10 +129,12 @@ Then the function lirefunc(arg1,arg2) is available for function queries. Two arg
 -  Actual Base64 encoded feature vector of the reference image. It can be obtained by calling LireFeature.getByteRepresentation() and by Base64 encoding the resulting byte[] data.
 -  Optional maximum distance for those data items that cannot be processed, ie. don't feature the respective field.
 
+Note that if you send the parameters using an URL you might take extra care of the URL encoding, ie. white space, the "=" sign, etc.
+
 Examples:
 
--  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA%3D") – adding the distance to the reference image to the results
--  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA%3D")+asc – sorting the results based on the distance to the reference image
+-  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA=") – adding the distance to the reference image to the results
+-  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA=")+asc – sorting the results based on the distance to the reference image
 
 If you extract the features yourself, use code like his one:
 
