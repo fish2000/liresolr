@@ -378,6 +378,15 @@ public class ParallelSolrIndexer implements Runnable {
                         ByteArrayInputStream b = new ByteArrayInputStream(tmp.getBuffer());
                         BufferedImage img = ImageUtils.trimWhiteSpace(ImageIO.read(b));
                         if (maxSideLength > 50) img = ImageUtils.scaleImage(img, maxSideLength);
+                        else if (img.getWidth() < 32 || img.getHeight() < 32) { // image is too small to be worked with, for now I just do an upscale.
+                            double scaleFactor = 128d;
+                            if (img.getWidth() > img.getHeight()) {
+                                scaleFactor = (128d / (double) img.getWidth());
+                            } else {
+                                scaleFactor = (128d / (double) img.getHeight());
+                            }
+                            img = ImageUtils.scaleImage(img, ((int) (scaleFactor * img.getWidth())), (int) (scaleFactor*img.getHeight()));
+                        }
                         byte[] tmpBytes = tmp.getFileName().getBytes();
                         sb.append("<doc>");
                         sb.append("<field name=\"id\">");
