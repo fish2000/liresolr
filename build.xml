@@ -100,7 +100,7 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
     </target>
 
     <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="D:\Java\Apps\solr_4.4.0-lire-schema\solr-webapp\webapp\WEB-INF\lib"/>
+        <copy file="dist/lire-request-handler.jar" todir="D:\Java\Solr-LIRE-Jetty-Example\solr-webapp\webapp\WEB-INF\lib"/>
     </target>
 
     <target name="index" depends="compile">
