@@ -51,9 +51,26 @@ import java.io.*;
 import java.util.*;
 
 /**
- * User: mlux
- * Date: 13.08.13
- * Time: 13:05
+ * This indexing application allows for parallel extraction of global features from multiple image files for
+ * use with the LIRE Solr plugin. It basically takes a list of images (ie. created by something like
+ * "dir /s /b > list.txt" or "ls [some parameters] > list.txt".
+ *
+ * use it like:
+ * <pre>$> java -jar lire-request-handler.jar -i <infile> [-o <outfile>] [-n <threads>] [-m <max_side_length>] [-f]</pre>
+ *
+ * Available options are:
+ * <ul>
+ * <li>-i <infile> … gives a file with a list of images to be indexed, one per line.</li>
+ * <li>-o <outfile> ... gives XML file the output is written to. if none is given the outfile is <infile>.xml</li>
+ * <li>-n <threads> ... gives the number of threads used for extraction. The number of cores is a good value for that.</li>
+ * <li>-m <max-side-length> ... gives a maximum side length for extraction. This option is useful if very larger images are indexed.</li>
+ * <li>-f ... forces to overwrite the <outfile>. If the <outfile> already exists and -f is not given, then the operation is aborted.</li>
+ * </ul>
+ *
+ * You then basically need to enrich the file with whatever metadata you prefer and send it to Solr using for instance curl:
+ * <pre>curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary @extracted_file.xml
+ curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary "<commit/>"</pre>
+ * @author Mathias Lux, mathias@juggle.at on  13.08.2013
  */
 public class ParallelSolrIndexer implements Runnable {
     private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);

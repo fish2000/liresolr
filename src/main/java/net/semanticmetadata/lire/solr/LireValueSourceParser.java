@@ -58,7 +58,8 @@ import org.apache.solr.search.ValueSourceParser;
  * http://localhost:9000/solr/lire/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA%3D")<br/>
  * The first parameter gives the field (cl, ph, eh, or jc), the second gives the byte[] representation of the
  * histogram in Base64 encoding</p>
- * @author Mathias Lux, 17.09.13, 12:21
+ *
+ * @author Mathias Lux, mathias@juggle.at, 17.09.2013
  */
 public class LireValueSourceParser extends ValueSourceParser {
     public void init(NamedList namedList) {

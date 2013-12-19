@@ -49,11 +49,8 @@ import java.io.*;
 import java.util.HashMap;
 
 /**
- * Created with IntelliJ IDEA.
- * User: mlux
- * Date: 08.07.13
- * Time: 11:26
- * To change this template use File | Settings | File Templates.
+ * Simple binary -> xml conversion to support import of binary extraction files of LIRE.
+ * @author Mathias Lux, mathias@juggle.at, 08.07.13
  */
 public class AddImagesFromDataFile {
     private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);

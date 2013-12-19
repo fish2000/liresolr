@@ -1,4 +1,4 @@
-package solr;
+package net.semanticmetadata.lire.solr;
 
 import junit.framework.TestCase;
 import net.semanticmetadata.lire.imageanalysis.JCD;

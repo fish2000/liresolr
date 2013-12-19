@@ -68,7 +68,8 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * This file is part of LIRE, a Java library for content based image retrieval.
+ * This is the main LIRE RequestHandler for the Solr Plugin. It supports query by example using the indexed id,
+ * an url or a feature vector. Furthermore, feature extraction and random selection of images are supported.
  *
  * @author Mathias Lux, mathias@juggle.at, 07.07.13
  */

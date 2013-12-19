@@ -16,7 +16,6 @@ import java.util.Map;
 
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
-import static org.apache.solr.handler.dataimport.DataImporter.COLUMN;
 import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
 
 /**

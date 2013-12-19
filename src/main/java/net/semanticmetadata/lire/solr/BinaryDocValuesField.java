@@ -51,7 +51,12 @@ import org.apache.solr.schema.SchemaField;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-
+/**
+ * Base64 -> DocValues implementation used for the Solr Plugin. Using this field one can index byte[] values by
+ * sending them to Solr base64 encoded. In case of the LIRE plugin, the fields get read linearly, so they need to be
+ * extremely fast, which is the case with the DocValues.
+ * @author Mathias Lux, mathias@juggle.at, 12.08.2013
+ */
 public class BinaryDocValuesField extends FieldType {
 
     private String toBase64String(ByteBuffer buf) {
@@ -71,7 +76,7 @@ public class BinaryDocValuesField extends FieldType {
 
     @Override
     public String toExternal(IndexableField f) {
-        return ("Not possible ...");
+        return toBase64String(toObject(f));
     }
 
     @Override

@@ -12,12 +12,65 @@
     <div style="width:100%; text-align:right"><img src="img/logo.png"/></div>
     <h1>LIRE Web Demo</h1>
 
-    <p>This page is a simple demonstrator for the LIRE image search library. The images below show the query image and
-        the results. Use the images to trigger a new content based search request. </p>
+    <p>This page is a simple demonstrator for the LIRE image search library. It uses a Solr back-end and has roughly 25,000 files indexed (the MIRFLICKR 08 data set). The images below show possible query images. Use the links below the images to trigger a new content based search request.</p>
+	<p>Search by tag: <input type="text" id="tagsearch" value="tags:*"/> - sort by <input type="text" id="sorthist" readonly/> <a href="javascript:$('#sorthist').val('')"><img src="img/del.gif"></a></p>
 	<script>
+  // alert(encodeURIComponent('+'));
+	function tagSearchDo() {
+		console.log($('#tagsearch').val());
+		// clear the old data
+		$('.imgCont').remove();
+		$("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
+		queryString =  "lire/select?q="+$('#tagsearch').val()+"&wt=json&rows=60";
+		if ($('#sorthist').val()) 
+			queryString = queryString + "&sort=lirefunc("+$('#sorthist').val()+")+asc";
+		// http://localhost:9000/solr/lire/select?q=tags%3Aaustria%0A&wt=json&indent=true
+		console.log(queryString);
+		$.getJSON(queryString, function( myResult ) {
+
+			$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
+			$("#results").html("Results for \""+$('#tagsearch').val()+"\"");
+			console.log(myResult);
+			
+			var last = $("#results");
+			for (var i =0; i< myResult.response.docs.length; i++) {
+				myID = myResult.response.docs[i].id.toString();
+				imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
+				imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
+				imageUrl = imageUrl.replace(".png", ".jpg");
+				tags = myResult.response.docs[i].tags[0].toString();
+				if (tags.length > 60) tags = tags.substring(0, 57) + "...";
+				recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"images/"+imageUrl+"\" title=\""+myResult.response.docs[i].tags[0].toString()+"\"/>"
+					+ "<div align=\"center\" class=\"searchLink\">"
+					// + "d="+myResult.docs[i].d+"<br/>"
+					// + "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+					+ "CBIR: <a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a> <br/>"
+					+ " Sort: <a href=\"javascript:extract('cl','http://localhost:9000/solr/images/"+myID+"');\">CL</a>, "
+					+ "<a href=\"javascript:extract('ph','http://localhost:9000/solr/images/"+myID+"');\">PH</a>, "
+					+ "<a href=\"javascript:extract('eh','http://localhost:9000/solr/images/"+myID+"');\">EH</a>, "
+					+ "<a href=\"javascript:extract('jc','http://localhost:9000/solr/images/"+myID+"');\">JCD</a> <br/>"
+					+ tags
+					+ "</div></div>" );
+				recent.insertAfter(last);
+				last=recent;
+			}
+			
+		});
+
+    }
+	
+	$('#tagsearch').keypress(function (e) {
+	  if (e.which == 13 && $('#tagsearch').val().length>=1) {
+		tagSearchDo(); // do tag based search ...
+	  }
+	});
+	
 $( document ).ready(function() {
 	// get JSON-formatted data from the server
-	$.getJSON( "/solr/lire/lireq", function( myResult ) {
+	$.getJSON( "lire/lireq", function( myResult ) {
 		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
 		console.log(myResult);
 	    
@@ -27,14 +80,15 @@ $( document ).ready(function() {
 			imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
 			imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
 			imageUrl = imageUrl.replace(".png", ".jpg");
-			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\""+imageUrl+"\" />"
+			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"images/"+imageUrl+"\" />"
 				+ "<div align=\"center\" class=\"searchLink\">"
 				// + "d="+myResult.docs[i].d+"<br/>"
-				+ "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+				// + "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
-				+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a>"
+				+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a> "
+				// + "<a href=\"javascript:extract('http://localhost:9000/solr/images/"+myID+"');\">Extract</a>, "
 				+ "</div></div>" );
 			recent.insertAfter(last);
 			last=recent;
@@ -43,16 +97,78 @@ $( document ).ready(function() {
 	});
 	
 });
+
+function extract(field, url) {
+	serverUrl = "lire/lireq?extract="+url+"&field="+field+"_ha";
+	console.log(serverUrl);
+	$.getJSON( serverUrl, function( myResult ) {
+		console.log(myResult);
+		
+		if (!myResult.Error) {
+			$('#sorthist').val(encodeURIComponent(field + ",\"" + myResult.histogram+"\""));
+			tagSearchDo(); // do tag search ...
+		}
+		else {
+			$("#results").html("Error: \""+myResult.Error+"\"");
+		}
+	
+	});
+
+}
+
 function search(idString, field) {
 	// console.log(idString);
 	// clear the old data
 	$('.imgCont').remove();
 	$("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
+    $("#results").html("Results for query id \""+idString+"\"");
+
 	// get all the new data from the server ...
-	serverUrl = "/solr/lire/lireq?rows=30&id="+idString+"&field="+field;
+	serverUrl = "lire/lireq?rows=30&id="+idString+"&field="+field;
 	console.log(serverUrl);
 	$.getJSON( serverUrl, function( myResult ) {
-		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
+		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms (query " + myResult.RawDocsSearchTime + " ms, rank " + myResult.ReRankSearchTime  + " ms)");
+		console.log(myResult);
+		
+		if (!myResult.Error) {
+			var last = $("#results");
+			for (var i =0; i< myResult.docs.length; i++) {
+				myID = myResult.docs[i].id.toString();
+				imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
+				imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
+				imageUrl = imageUrl.replace(".png", ".jpg");
+				recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"images/"+imageUrl+"\" />"
+					+ "<div class=\"searchLink\">"
+					 + "d="+myResult.docs[i].d+"<br/>"
+					// + "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
+					+ "<a href=\"javascript:search('"+myID+"', 'jc_ha');\">JCD</a>"
+					+ "</div></div>" );
+				recent.insertAfter(last);
+				last=recent;
+			}
+		}
+		else {
+			$("#results").html("Error: \""+myResult.Error+"\"");
+		}
+	
+	});
+}
+function searchUrl(field) {
+	console.log($("#urlq").val());
+	console.log(field);
+	// clear the old data
+	$('.imgCont').remove();
+	$("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
+	$("#results").html("Results for query \""+$("#urlq").val().substring(0,12)+"...\"");
+
+	// get all the new data from the server ...
+	serverUrl = "lire/lireq?rows=30&url="+$("#urlq").val()+"&field="+field;
+	console.log(serverUrl);
+	$.getJSON( serverUrl, function( myResult ) {
+		$("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms (query " + myResult.RawDocsSearchTime + " ms, rank " + myResult.ReRankSearchTime  + " ms)");
 		console.log(myResult);
 		
 		var last = $("#results");
@@ -61,10 +177,10 @@ function search(idString, field) {
 			imageUrl = myID.replace("CA", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_ca_jpg");
 			imageUrl = imageUrl.replace("US/jpg_us_trim", "http://demo-itec.uni-klu.ac.at/liredemo/wipo_us_jpg");
 			imageUrl = imageUrl.replace(".png", ".jpg");
-			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\""+imageUrl+"\" />"
+			recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"images/"+imageUrl+"\" />"
 				+ "<div class=\"searchLink\">"
-				 + "d="+myResult.docs[i].d+"<br/>"
-				+ "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
+				+ "d="+myResult.docs[i].d+"<br/>"
+				// + "<a href=\"javascript:search('"+myID+"', 'oh_ha');\">OH</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'cl_ha');\">CL</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'ph_ha');\">PH</a>, "
 				+ "<a href=\"javascript:search('"+myID+"', 'eh_ha');\">EH</a>, "
@@ -75,13 +191,16 @@ function search(idString, field) {
 		}
 	
 	});
-}
+};    
+
 	</script>
     <h1 id="results">Results</h1>
 
     <br style="clear:both;"/>
 
-<p><i id="perf">Index search time</i></p>
+<p class="otherLink"><i id="perf">Index search time</i></p>
+
+<p class="otherLink">Search by image URL: <input type="text" id="urlq" style="border: 1px solid #DDDDDD; width: 220px"/>  - <a href="javascript:searchUrl('cl_ha');">CL</a>, <a href="javascript:searchUrl('ph_ha');">PH</a>, <a href="javascript:searchUrl('ph_ha');">EH</a>, <a href="javascript:searchUrl('ph_ha');">JC</a></p>
 </div>
 </body>
 </html>
