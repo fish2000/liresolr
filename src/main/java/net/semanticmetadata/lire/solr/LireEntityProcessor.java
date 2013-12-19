@@ -14,8 +14,15 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
+import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
+import static org.apache.solr.handler.dataimport.DataImporter.COLUMN;
+import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
+
 /**
  * An entity processor like the one for Tika to support data base imports and alike
+ * Special thanks to Giuseppe Becchi, who triggered the development, tested it and
+ * found the location the critical bug
  *
  * @author Mathias Lux, mathias@juggle.at on 17.12.13.
  */
@@ -46,17 +53,20 @@ public class LireEntityProcessor extends EntityProcessorBase {
      * null to signal end of rows
      */
     public Map<String, Object> nextRow() {
-        if (done) return null;
+        if (done) {
+            done = false;
+            return null;
+        }
         Map<String, Object> row = new HashMap<String, Object>();
         DataSource<InputStream> dataSource = context.getDataSource();
-        System.out.println("\n**** " + context.getResolvedEntityAttribute("filepath"));
-
-        InputStream is = dataSource.getData(context.getResolvedEntityAttribute("filepath"));
+        // System.out.println("\n**** " + context.getResolvedEntityAttribute(URL));
+        InputStream is = dataSource.getData(context.getResolvedEntityAttribute(URL));
+        row.put("id", context.getResolvedEntityAttribute(URL));
         // here we have to open the stream and extract the features. Then we put them into the row object.
         // basically I hope that the entity processor is called for each entity anew, otherwise this approach won't work.
         try {
             BufferedImage img = ImageIO.read(is);
-            row.put("id", context.getResolvedEntityAttribute("filepath"));
+            row.put("id", context.getResolvedEntityAttribute(URL));
             for (int i = 0; i < listOfFeatures.length; i++) {
                 LireFeature feature = listOfFeatures[i];
                 feature.extract(img);
@@ -66,12 +76,11 @@ public class LireEntityProcessor extends EntityProcessorBase {
                 row.put(hashesField, ParallelSolrIndexer.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
             }
         } catch (IOException e) {
-            System.err.println("Error loading image or extracting features.");
-            e.printStackTrace();
+            wrapAndThrow(SEVERE, e, "Error loading image or extracting features.");
         }
         // if (count++>10)
-            done = true;
-        dataSource.close();
+        done = true;
+        // dataSource.close();
         return row;
     }
 }

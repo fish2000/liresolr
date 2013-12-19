@@ -158,4 +158,34 @@ Indexing
 Check ParallelSolrIndexer.java for indexing. It creates XML documents (either one per image or one single large file)
 to be sent to the Solr Server.
 
-*Mathias Lux, 2013-10-07*
+Another way is to use the LireEntityProcessor. Then you have to reference the solr-data-config.xml file in the
+solrconfig.xml, and then give the configuration for the EntityProcessor like this:
+
+    <dataConfig>
+        <dataSource name ="bin" type="BinFileDataSource" />
+        <document>
+            <entity name="f"
+                    processor="FileListEntityProcessor"
+                    transformer="TemplateTransformer"
+                    baseDir="D:\Java\Projects\Lire\testdata\wang-1000\"
+                    fileName=".*jpg"
+                    recursive="true"
+                    rootEntity="false" dataSource="null" onError="skip">
+                <entity name="lire-test" processor="net.semanticmetadata.lire.solr.LireEntityProcessor" url="${f.fileAbsolutePath}" dataSource="bin"  onError="skip">
+                    <field column="id"/>
+                    <field column="cl_ha"/>
+                    <field column="cl_hi"/>
+                    <field column="ph_ha"/>
+                    <field column="ph_hi"/>
+                    <field column="oh_ha"/>
+                    <field column="oh_hi"/>
+                    <field column="jc_ha"/>
+                    <field column="jc_hi"/>
+                    <field column="eh_ha"/>
+                    <field column="eh_hi"/>
+                </entity>
+            </entity>
+        </document>
+    </dataConfig>
+
+*Mathias Lux, 2013-12-19*
