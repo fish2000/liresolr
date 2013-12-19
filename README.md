@@ -1,7 +1,13 @@
 LIRE Solr Integration Project
 =============================
 
-Includes a RequestHandler and some utility classes for a fast start.
+This is a Solr plugin for the LIRE content based image retrieval library, so basically it's for indexing images and then
+finding similar (looking) ones. The original library can be found at https://code.google.com/p/lire/
+
+The LIRE Solr plugin includes a RequestHandler for searching, an EntityProcessor for indexing,
+a ValeSource Parser for content based re-ranking and a parallel indexing application.
+
+A demo can be found at http://demo-itec.uni-klu.ac.at/liredemo/
 
 The request handler supports four different types of queries
 
