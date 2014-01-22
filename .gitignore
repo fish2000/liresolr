@@ -11,9 +11,9 @@
 .DS_Store
 .password
 
-default.mf
+def*.mf
 dist/*.jar
-src/main/config/build.properties
+src/main/config/build.*
 
 *.aof
 *.rdb
