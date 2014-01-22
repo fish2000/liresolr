@@ -1,6 +1,4 @@
 *~
-\#*\#
-stdout
 *.eprj
 *.svn
 *.pyc
@@ -14,7 +12,7 @@ stdout
 .password
 
 default.mf
-dist/lire-request-handler.jar
+dist/*.jar
 src/main/config/build.properties
 
 *.aof
