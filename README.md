@@ -7,7 +7,7 @@ finding similar (looking) ones. The original library can be found at https://cod
 The LIRE Solr plugin includes a RequestHandler for searching, an EntityProcessor for indexing,
 a ValeSource Parser for content based re-ranking and a parallel indexing application.
 
-A demo can be found at http://demo-itec.uni-klu.ac.at/liredemo/
+A demo can be found at [http://demo-itec.uni-klu.ac.at/liredemo/](http://demo-itec.uni-klu.ac.at/liredemo/)
 
 The request handler supports four different types of queries
 

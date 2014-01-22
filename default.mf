@@ -1,0 +1,5 @@
+Build-Date: 21.01.2014 02:26 PM
+Build-Number: 193
+Class-Path: lib/commons-codec-1.8.jar
+Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
+        
