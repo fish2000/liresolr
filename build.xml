@@ -3,17 +3,19 @@
         This buildfile is used to build and package the LIRE RequestHandler for SOLR
     </description>
 
-    <property name="src" value="src/main/java"/>
-    <property name="config" value="src/main/config"/>
-    <property name="build" value="classes"/>
-    <property name="dist" value="dist"/>
-    <property name="versionstring" value="0.9.3"/>
+    <property name="src" value="src/main/java" />
+    <property name="config" value="src/main/config" />
+    <property name="build" value="classes" />
+    <property name="dist" value="dist" />
+    <property name="var" value="../../var" />
+    
+    <property name="versionstring" value="0.9.3" />
     <!-- path to test files -->
-    <property name="test" value="test"/>
+    <property name="test" value="test" />
     <!-- path to documentation like README or CHANGES -->
-    <property name="doc" value="src/main/doc"/>
+    <property name="doc" value="src/main/doc" />
     <!-- path to additional files like installer scripts, icons and batch files -->
-    <property name="add.files" value="add.files"/>
+    <property name="add.files" value="add.files" />
 
     <!-- define the classpath  -->
     <path id="classpath.path">
@@ -40,7 +42,7 @@
         <property file="${config}/build.properties"/>
         <echo file="default.mf" append="false">Build-Date: ${touch.time}
 Build-Number: ${build-number}
-Class-Path: lib/commons-codec-1.8.jar
+Class-Path: lib/commons-codec-1.9.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         </echo>
         <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
@@ -99,16 +101,31 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         </jar>
     </target>
 
+    <!-- This is more or less dealt with by the project-root Makefile -->
     <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="D:\Java\Solr-LIRE-Jetty-Example\solr-webapp\webapp\WEB-INF\lib"/>
+        <copy file="dist/lire-request-handler.jar"
+            todir="D:\Java\Solr-LIRE-Jetty-Example\solr-webapp\webapp\WEB-INF\lib"/>
     </target>
 
     <target name="index" depends="compile">
-        <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
-            <jvmarg line="-Xmx2048M -server"/>
-            <!-- adapt this argument to use your pictures -->
-            <arg line="-i D:/Temp/tmp/dir.txt -n 16 -f"/>
+        <!--    Note: This needs to be forked, otherwise multi threading won't work,
+                and the heap space will be exceeded herewith. -->
+        <java classpathref="classpath.path"
+            classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer"
+            fork="true"
+            maxmemory="2048M"
+            error="indexer_error.log"
+            output="indexer_output.log">
+            
+            <jvmarg line="-Xmx2048M -server" />
+            
+            <!-- adapt these arguments to use your pictures -->
+                
+                <!-- individual XML files -->
+                <arg line="-i ${var}/ffffound-jpgs.txt -n 16 -f" />
+                
+                <!-- single XML file output -->
+                <arg line="-i ${var}/ffffound-jpgs.txt -o ${var}/ffffound-jpg-analysis.xml -n 16 -f" />
 
         </java>
     </target>
