@@ -7,15 +7,19 @@
     <property name="config" value="src/main/config" />
     <property name="build" value="classes" />
     <property name="dist" value="dist" />
+    <property name="build.properties" value="${config}/build.properties" />
+    <property name="liresolr.jar" value="${dist}/lire-request-handler.jar" />
+    <property name="commons.codec" value="lib/commons-codec-1.9.jar" />
+    
+    <property name="mainclass" value="net.semanticmetadata.lire.solr.ParallelSolrIndexer" />
+    <property name="versionstring" value="0.9.3" />
     
     <!-- deploy/dist props -->
-    <property name="mainclass" value="net.semanticmetadata.lire.solr.ParallelSolrIndexer" />
-    <property name="commons.codec" value="lib/commons-codec-1.9.jar" />
-    <property name="liresolr.jar" value="${dist}/lire-request-handler.jar" />
-    <property name="solrlib" value="../../local/lib/solr/example/solr/lib" />
-    <property name="var" value="../../var" />
-    
-    <property name="versionstring" value="0.9.3" />
+    <property name="VENV" value="/Users/fish/Praxa/TESSAR" />
+    <property name="solrlib" value="${VENV}/local/lib/solr/example/solr/lib" />
+    <property name="var" value="${VENV}/var" />
+    <property name="logs" value="${VENV}/var/logs" />
+    <property name="cache" value="${VENV}/var/cache" />
     
     <!-- path to test files -->
     <property name="test" value="test" />
@@ -28,15 +32,15 @@
 
     <!-- define the classpath  -->
     <path id="classpath.path">
-        <pathelement location="${build}"/>
+        <pathelement location="${build}" />
         <fileset dir="lib">
-            <include name="*.jar"/>
+            <include name="*.jar" />
         </fileset>
     </path>
     
     <target name="clean">
-        <delete dir="${build}"/>
-        <delete dir="${dist}"/>
+        <delete dir="${build}" />
+        <delete dir="${dist}" />
     </target>
     
     <target name="init">
@@ -44,82 +48,84 @@
         <tstamp>
             <format property="touch.time" pattern="dd.MM.yyyy hh:mm aa" />
         </tstamp>
-        <mkdir dir="${build}"/>
+        <mkdir dir="${build}" />
     </target>
     
     <target name="compile" depends="init">
-        <propertyfile file="${config}/build.properties" comment="Properties of the Lire-Solr release build">
-            <entry key="build-date" type="date" value="now"/>
-            <entry key="build-number" type="int" value="1" operation="+"/>
+        <propertyfile file="${build.properties}" comment="Properties of the Lire-Solr release build">
+            <entry key="build-date" type="date" value="now" />
+            <entry key="build-number" type="int" value="1" operation="+" />
         </propertyfile>
-        <property file="${config}/build.properties"/>
+        <property file="${build.properties}" />
         <echo file="default.mf" append="false">Build-Date: ${touch.time}
-Build-Number: ${build-number}-release
+Build-Number: ${build-number}
+Build-Mode: RELEASE
 Class-Path: ${commons.codec}
 Main-Class: ${mainclass}
         </echo>
         <javac srcdir="${src}" destdir="${build}"
             debug="false"
             includeantruntime="false">
-            <classpath refid="classpath.path"/>
+            <classpath refid="classpath.path" />
         </javac>
         <copy todir="${build}">
             <fileset dir="${src}">
                 <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/*.java"/>
-                    <exclude name="**/*.html"/>
-                    <exclude name="**/.svn/*"/>
-                    <exclude name="**/.git/*"/>
-                    <exclude name="**/.git*"/>
+                    <include name="**/*.*" />
+                    <exclude name="**/*.java" />
+                    <exclude name="**/*.html" />
+                    <exclude name="**/.svn/*" />
+                    <exclude name="**/.git/*" />
+                    <exclude name="**/.git*" />
                 </patternset>
             </fileset>
         </copy>
     </target>
     
     <target name="compile.debug" depends="init">
-        <propertyfile file="${config}/build.properties" comment="Properties of the Lire-Solr debug build">
-            <entry key="build-date" type="date" value="now"/>
-            <entry key="build-number" type="int" value="1" operation="+"/>
+        <propertyfile file="${build.properties}" comment="Properties of the Lire-Solr debug build">
+            <entry key="build-date" type="date" value="now" />
+            <entry key="build-number" type="int" value="1" operation="+" />
         </propertyfile>
-        <property file="${config}/build.properties"/>
+        <property file="${build.properties}" />
         <echo file="default.mf" append="false">Build-Date: ${touch.time}
-Build-Number: ${build-number}-debug
+Build-Number: ${build-number}
+Build-Mode: DEBUG
 Class-Path: ${commons.codec}
 Main-Class: ${mainclass}
         </echo>
         <javac srcdir="${src}" destdir="${build}"
             debug="true" debuglevel="lines,vars,source"
             includeantruntime="false">
-            <classpath refid="classpath.path"/>
+            <classpath refid="classpath.path" />
         </javac>
         <copy todir="${build}">
             <fileset dir="${src}">
                 <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/*.java"/>
-                    <exclude name="**/*.html"/>
-                    <exclude name="**/.svn/*"/>
-                    <exclude name="**/.git/*"/>
-                    <exclude name="**/.git*"/>
+                    <include name="**/*.*" />
+                    <exclude name="**/*.java" />
+                    <exclude name="**/*.html" />
+                    <exclude name="**/.svn/*" />
+                    <exclude name="**/.git/*" />
+                    <exclude name="**/.git*" />
                 </patternset>
             </fileset>
         </copy>
     </target>
     
     <target name="dist" depends="compile">
-        <mkdir dir="${dist}"/>
+        <mkdir dir="${dist}" />
         
         <!--
             <mkdir dir="${dist}/lib" />
             <copy todir="${dist}">
                 <fileset dir="lib">
                     <patternset>
-                        <include name="**/*.*"/>
-                        <exclude name="**/CVS/*"/>
-                        <exclude name="**/.svn/*"/>
-                        <exclude name="**/.git/*"/>
-                        <exclude name="**/.git*"/>
+                        <include name="**/*.*" />
+                        <exclude name="**/CVS/*" />
+                        <exclude name="**/.svn/*" />
+                        <exclude name="**/.git/*" />
+                        <exclude name="**/.git*" />
                     </patternset>
                 </fileset>
             </copy>
@@ -130,20 +136,20 @@ Main-Class: ${mainclass}
         
         <!-- replace the bit sampling data file -->
         <!--
-            <delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/>
-            <copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/>
+            <delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj" />
+            <copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/" />
         -->
 
         <!--
-            <mkdir dir="${dist}/docs"/>
+            <mkdir dir="${dist}/docs" />
             <copy todir="${dist}/docs">
                 <fileset dir="src/main/docs">
                     <patternset>
-                        <include name="**/*.*"/>
-                        <exclude name="**/CVS/*"/>
-                        <exclude name="**/.svn/*"/>
-                        <exclude name="**/.git/*"/>
-                        <exclude name="**/.git*"/>
+                        <include name="**/*.*" />
+                        <exclude name="**/CVS/*" />
+                        <exclude name="**/.svn/*" />
+                        <exclude name="**/.git/*" />
+                        <exclude name="**/.git*" />
                     </patternset>
                 </fileset>
             </copy>
@@ -157,8 +163,8 @@ Main-Class: ${mainclass}
     </target>
 
     <!-- This is more or less dealt with by the project-root Makefile -->
-    <target name="deploy.local" depends="dist">
-        <copy file="dist/lire-request-handler.jar" todir="${solrlib}" />
+    <target name="deploy.venv" depends="dist">
+        <copy file="${liresolr.jar}" todir="${solrlib}" />
     </target>
 
     <target name="index" depends="dist">
@@ -166,21 +172,20 @@ Main-Class: ${mainclass}
                 and the heap space will be exceeded herewith. -->
         
         <java classpathref="classpath.path"
-            classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer"
-            fork="true"
-            maxmemory="2048M"
-            error="${var}/logs/liresolr_indexer_error.log"
-            output="${var}/logs/liresolr_indexer_output.log">
+            classname="${mainclass}" fork="true" maxmemory="2048M"
+            error="${logs}/liresolr_indexer_error.log"
+            output="${logs}/liresolr_indexer_output.log">
             
             <jvmarg line="-Xmx2048M -server" />
             
             <!-- adapt these arguments to use your pictures -->
                 
                 <!-- individual XML files -->
-                <arg line="-i ${var}/ffffound-jpgs.txt -n 16 -f" />
+                <!--<arg line="-i ${cache}/ffffound-jpgs.txt -n 16 -f" />-->
                 
                 <!-- single XML file output -->
-                <arg line="-i ${var}/ffffound-jpgs.txt -o ${var}/ffffound-jpg-analysis.xml -n 16 -f" />
+                
+                <arg line="-i ${cache}/ffffound-jpgs.txt -o ${cache}/ffffound-jpg-analysis.xml -n 16 -f" />
 
         </java>
     </target>
