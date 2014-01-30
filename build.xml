@@ -38,11 +38,6 @@
         </fileset>
     </path>
     
-    <target name="clean">
-        <delete dir="${build}" />
-        <delete dir="${dist}" />
-    </target>
-    
     <target name="init">
         <tstamp/>
         <tstamp>
@@ -160,6 +155,11 @@ Main-Class: ${mainclass}
             basedir="${build}">
             <exclude name="**/apache/**" />
         </jar>
+    </target>
+    
+    <target name="clean">
+        <delete dir="${build}" />
+        <delete dir="${dist}" />
     </target>
 
     <!-- This is more or less dealt with by the project-root Makefile -->
