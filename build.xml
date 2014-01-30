@@ -7,13 +7,22 @@
     <property name="config" value="src/main/config" />
     <property name="build" value="classes" />
     <property name="dist" value="dist" />
+    
+    <!-- deploy/dist props -->
+    <property name="mainclass" value="net.semanticmetadata.lire.solr.ParallelSolrIndexer" />
+    <property name="commons.codec" value="lib/commons-codec-1.9.jar" />
+    <property name="liresolr.jar" value="${dist}/lire-request-handler.jar" />
+    <property name="solrlib" value="../../local/lib/solr/example/solr/lib" />
     <property name="var" value="../../var" />
     
     <property name="versionstring" value="0.9.3" />
+    
     <!-- path to test files -->
     <property name="test" value="test" />
+    
     <!-- path to documentation like README or CHANGES -->
     <property name="doc" value="src/main/doc" />
+    
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files" />
 
@@ -24,28 +33,34 @@
             <include name="*.jar"/>
         </fileset>
     </path>
-
+    
+    <target name="clean">
+        <delete dir="${build}"/>
+        <delete dir="${dist}"/>
+    </target>
+    
     <target name="init">
         <tstamp/>
         <tstamp>
-            <format property="touch.time" pattern="dd.MM.yyyy hh:mm aa"/>
+            <format property="touch.time" pattern="dd.MM.yyyy hh:mm aa" />
         </tstamp>
         <mkdir dir="${build}"/>
     </target>
-
-
-    <target name="compile" depends="clean, init">
-        <propertyfile file="${config}/build.properties" comment="Properties of this specific CALIPH build">
+    
+    <target name="compile" depends="init">
+        <propertyfile file="${config}/build.properties" comment="Properties of the Lire-Solr release build">
             <entry key="build-date" type="date" value="now"/>
             <entry key="build-number" type="int" value="1" operation="+"/>
         </propertyfile>
         <property file="${config}/build.properties"/>
         <echo file="default.mf" append="false">Build-Date: ${touch.time}
-Build-Number: ${build-number}
-Class-Path: lib/commons-codec-1.9.jar
-Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
+Build-Number: ${build-number}-release
+Class-Path: ${commons.codec}
+Main-Class: ${mainclass}
         </echo>
-        <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
+        <javac srcdir="${src}" destdir="${build}"
+            debug="false"
+            includeantruntime="false">
             <classpath refid="classpath.path"/>
         </javac>
         <copy todir="${build}">
@@ -55,67 +70,107 @@ Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
                     <exclude name="**/*.java"/>
                     <exclude name="**/*.html"/>
                     <exclude name="**/.svn/*"/>
-                    <exclude name="**/.svn/*"/>
+                    <exclude name="**/.git/*"/>
+                    <exclude name="**/.git*"/>
                 </patternset>
             </fileset>
         </copy>
     </target>
-
-    <target name="clean">
-        <delete dir="${build}"/>
-        <delete dir="${dist}"/>
+    
+    <target name="compile.debug" depends="init">
+        <propertyfile file="${config}/build.properties" comment="Properties of the Lire-Solr debug build">
+            <entry key="build-date" type="date" value="now"/>
+            <entry key="build-number" type="int" value="1" operation="+"/>
+        </propertyfile>
+        <property file="${config}/build.properties"/>
+        <echo file="default.mf" append="false">Build-Date: ${touch.time}
+Build-Number: ${build-number}-debug
+Class-Path: ${commons.codec}
+Main-Class: ${mainclass}
+        </echo>
+        <javac srcdir="${src}" destdir="${build}"
+            debug="true" debuglevel="lines,vars,source"
+            includeantruntime="false">
+            <classpath refid="classpath.path"/>
+        </javac>
+        <copy todir="${build}">
+            <fileset dir="${src}">
+                <patternset>
+                    <include name="**/*.*"/>
+                    <exclude name="**/*.java"/>
+                    <exclude name="**/*.html"/>
+                    <exclude name="**/.svn/*"/>
+                    <exclude name="**/.git/*"/>
+                    <exclude name="**/.git*"/>
+                </patternset>
+            </fileset>
+        </copy>
     </target>
-
+    
     <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
-        <!--mkdir dir="${dist}/lib"/>
-        <mkdir dir="${dist}/docs"/-->
-
-        <!--copy todir="${dist}">
-            <fileset dir="lib">
-                <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/CVS/*"/>
-                    <exclude name="**/.svn/*"/>
-                </patternset>
-            </fileset>
-        </copy-->
-        <unjar src="lib/lire.jar" dest="${build}"/>
+        
+        <!--
+            <mkdir dir="${dist}/lib" />
+            <copy todir="${dist}">
+                <fileset dir="lib">
+                    <patternset>
+                        <include name="**/*.*"/>
+                        <exclude name="**/CVS/*"/>
+                        <exclude name="**/.svn/*"/>
+                        <exclude name="**/.git/*"/>
+                        <exclude name="**/.git*"/>
+                    </patternset>
+                </fileset>
+            </copy>
+        -->
+        
+        <!-- expand lire classes into the build directory -->
+        <unjar src="lib/lire.jar" dest="${build}" />
+        
         <!-- replace the bit sampling data file -->
+        <!--
+            <delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/>
+            <copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/>
+        -->
 
-        <!--delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/-->
-        <!--copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/-->
+        <!--
+            <mkdir dir="${dist}/docs"/>
+            <copy todir="${dist}/docs">
+                <fileset dir="src/main/docs">
+                    <patternset>
+                        <include name="**/*.*"/>
+                        <exclude name="**/CVS/*"/>
+                        <exclude name="**/.svn/*"/>
+                        <exclude name="**/.git/*"/>
+                        <exclude name="**/.git*"/>
+                    </patternset>
+                </fileset>
+            </copy>
+        -->
 
-        <!--copy todir="${dist}/docs">
-            <fileset dir="src/main/docs">
-                <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/CVS/*"/>
-                    <exclude name="**/.svn/*"/>
-                </patternset>
-            </fileset>
-        </copy-->
-
-        <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}">
+        <jar jarfile="${liresolr.jar}"
+            manifest="default.mf"
+            basedir="${build}">
             <exclude name="**/apache/**" />
         </jar>
     </target>
 
     <!-- This is more or less dealt with by the project-root Makefile -->
-    <target name="copy_jar_to_jetty" depends="dist">
-        <copy file="dist/lire-request-handler.jar"
-            todir="D:\Java\Solr-LIRE-Jetty-Example\solr-webapp\webapp\WEB-INF\lib"/>
+    <target name="deploy.local" depends="dist">
+        <copy file="dist/lire-request-handler.jar" todir="${solrlib}" />
     </target>
 
-    <target name="index" depends="compile">
+    <target name="index" depends="dist">
         <!--    Note: This needs to be forked, otherwise multi threading won't work,
                 and the heap space will be exceeded herewith. -->
+        
         <java classpathref="classpath.path"
             classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer"
             fork="true"
             maxmemory="2048M"
-            error="indexer_error.log"
-            output="indexer_output.log">
+            error="${var}/logs/liresolr_indexer_error.log"
+            output="${var}/logs/liresolr_indexer_output.log">
             
             <jvmarg line="-Xmx2048M -server" />
             

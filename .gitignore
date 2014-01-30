@@ -12,6 +12,8 @@
 .password
 
 default.mf
+indexer_error.log
+indexer_output.log
 dist/*.jar
 src/main/config/build.properties
 
