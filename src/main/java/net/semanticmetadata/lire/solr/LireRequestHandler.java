@@ -119,14 +119,17 @@ public class LireRequestHandler extends RequestHandlerBase {
      */
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
-        // (1) check if the necessary parameters are here
-        if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
+        if (req.getParams().get("hashes") != null) {
+            // we are searching for hashes ...
             handleHashSearch(req, rsp);
-        } else if (req.getParams().get("url") != null) { // we are searching for an image based on an URL
+        } else if (req.getParams().get("url") != null) {
+            // we are searching for an image based on an URL
             handleUrlSearch(req, rsp);
-        } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
+        } else if (req.getParams().get("id") != null) {
+            // we are searching for an image based on an ID [what? -ed]
             handleIdSearch(req, rsp);
-        } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
+        } else if (req.getParams().get("extract") != null) {
+            // we are trying to extract features from an image based on an URL
             handleExtract(req, rsp);
         } else { // lets return random results.
             handleRandomSearch(req, rsp);
